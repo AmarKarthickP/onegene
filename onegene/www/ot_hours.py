@@ -36,11 +36,11 @@ def get_att_data():
     parent_summary = {}
     for d in departments:
         linked_departments = frappe.get_all("Department", {'disabled': ('!=', 1), "parent_department": d.name}, ['name'])
-        table_data = '<table width=100% border="1" style="border-collapse:collapse;font-size: 12px;text-align:center" cellspacing="0" cellpadding="5">'
+        table_data = '<table width=100% border="1" style="border-collapse:collapse;font-size: 16px;text-align:center;line-height:0.5" cellspacing="0" cellpadding="5">'
         table_data += '<tr style="background-color:#f0e29c;"><td colspan="1" style="border-right:hidden;"><img src="https://erp.onegeneindia.in/files/ci_img.png" width="190" height="100" style="float:left"></td><td colspan="5" style="padding-right:250px;font-size: 20px;"><b>Over Time Report ({})</b></td></tr>'.format(formatted)
-        table_data += "<tr style='border: 1px solid black;background-color:#a3d696;font-weight:bold;text-align:center'><td width=25%>Parent Department</td>"
-        table_data += '<td width=20%>Department</td><td width=15%>Apprentice</td><td width=15%>Operator</td><td width=15%>Contractor</td>'
-        table_data += '<td width=15%>Total</td></tr>'
+        table_data += "<tr style='border: 1px solid black;background-color:#a3d696;font-weight:bold;text-align:center'><td width=28%>Parent Department</td>"
+        table_data += '<td width=29%>Department</td><td width=12%>Apprentice</td><td width=12%>Operator</td><td width=12%>Contractor</td>'
+        table_data += '<td width=12%>Total</td></tr>'
         parent_ot_data = frappe.db.sql(""" 
             SELECT custom_employee_category, COALESCE(SUM(custom_overtime_hours), 0) AS count
             FROM `tabAttendance`
@@ -59,7 +59,7 @@ def get_att_data():
             parent_ot_count.get('Contractor', 0)
         )
         table_data += '<tr>'
-        table_data += '<td rowspan={0} style="vertical-align:text-top;"><b><center>{1}</b></center></td>'.format(len(linked_departments)+1, d.name)
+        table_data += '<td rowspan={0} style="vertical-align:text-top;"><b><center>{1}</center></td></b>'.format(len(linked_departments)+1, d.name)
         table_data += '<td></td><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td>'.format(
             parent_ot_count.get('Apprentice', 0),
             parent_ot_count.get('Operator', 0),
@@ -98,7 +98,7 @@ def get_att_data():
             )
             table_data += '</tr>'
         total_all_ot = total_parent_ot + sum(sub_totals.values())
-        table_data += "<tr style='border: 1px solid black;background-color:#96cfd6;font-weight:bold;color:red;text-align:center'><td></td><td><strong>Total</strong></td>"
+        table_data += "<tr style='border: 1px solid black;background-color:#96cfd6;font-weight:bold;color:red;text-align:center;font-size: 15px;'><td></td><td><strong>Total</strong></td>"
         table_data += '<td>{}</td><td>{}</td><td>{}</td><td>{}</td>'.format(
             sub_totals.get('Apprentice', 0) + parent_ot_count.get('Apprentice', 0),
             sub_totals.get('Operator', 0) + parent_ot_count.get('Operator', 0),
@@ -128,7 +128,7 @@ def get_att_data():
     summary_table += "<tr style='border: 1px solid black;background-color:#a3d696;font-weight:bold;text-align:center'><td width=25%>Parent Department</td>"
     summary_table += '<td width=15%>Apprentice</td><td width=15%>Operator</td><td width=15%>Contractor</td><td width=15%>Total</td></tr>'
     for dept, counts in parent_summary.items():
-        summary_table += '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>'.format(
+        summary_table += '<tr style="font-size: 15px;"><b><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</b></td>'.format(
             dept,
             counts['Apprentice'],
             counts['Operator'],
@@ -136,7 +136,7 @@ def get_att_data():
             counts['Total']
         )
         summary_table += '</tr>'
-    summary_table += '<tr style="border: 1px solid black;background-color:#96cfd6;font-weight:bold;color:red;text-align:center"><td>Total</td><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td>'.format(tot_emp_app,tot_emp_oper,tot_emp_cont,tot_emp_tot)   
+    summary_table += '<tr style="border: 1px solid black;background-color:#96cfd6;font-weight:bold;color:red;text-align:center;font-size: 15px;"><b><td>Total</td><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</b></td>'.format(tot_emp_app,tot_emp_oper,tot_emp_cont,tot_emp_tot)   
     summary_table += '</table>'
     all_data.append(summary_table)
     

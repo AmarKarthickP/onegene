@@ -9,7 +9,7 @@ frappe.query_reports["MRP Test"] = {
 			"fieldtype": "Date",
 			"width": "80",
 			"reqd": 1,
-			// "default": frappe.datetime.add_months(frappe.datetime.get_today(), -1),
+			"default": frappe.datetime.month_start()
 		},
 		{
 			"fieldname":"to_date",
@@ -17,13 +17,24 @@ frappe.query_reports["MRP Test"] = {
 			"fieldtype": "Date",
 			"width": "80",
 			"reqd": 1,
-			// "default": frappe.datetime.get_today()
+			"default": frappe.datetime.get_today()
 		},
 		{
 			"fieldname":"customer",
 			"label": __("Customer"),
 			"fieldtype": "Link",
 			"options": "Customer",
+		},
+		{
+			"fieldname":"order_type",
+			"label": __("Order Type"),
+			"fieldtype": "Select",
+			"options": ['','Sales','Maintenance','Shopping Cart']
+		},
+		{
+			"fieldname":"run_mrp",
+			"label": __("Run MRP"),
+			"fieldtype": "Check",
 		},
 	],
 	formatter: (value, row, column, data, default_formatter) => {
@@ -55,7 +66,11 @@ frappe.query_reports["MRP Test"] = {
 			value = data["required_qty"];			
 			column.link_onclick = "frappe.query_reports['MRP Test'].set_route_to_req(" + JSON.stringify(data) + ")";
 		}
-		
+		if (column.fieldname == "cover_days" && data ) {
+			value = data["cover_days"];			
+			column.link_onclick = "frappe.query_reports['MRP Test'].set_route_to_cover_days(" + JSON.stringify(data) + ")";
+		}
+
 		value = default_formatter(value, row, column, data);
 		return value;
 	},
@@ -86,35 +101,6 @@ frappe.query_reports["MRP Test"] = {
 
 			}
 		})
-		
-
-
-
-
-		// frappe.db.get_value("Material Planning Details", {'item_code':data["item_code"],'date':frappe.datetime.get_today()},['name']).then(exists => {
-		// 	if (exists) {
-		// 		window.open(
-		// 			frappe.urllib.get_full_url("/app/material-planning-details/"+encodeURIComponent(exists.message.name)));
-		// 	}
-		// });
-		
-		// if (column.fieldname == "actual_stock_qty") {
-		// 	value = "<span style='color:purple'>" + value + "</span>";
-			// switch (data.actual_stock_qty) {
-			// 	case "Process Item":
-			// 		value = "<span style='color:orange'>" + value + "</span>";
-			// 		break;
-			// 	case "Purchase Item":
-			// 		value = "<span style='color:blue'>" + value + "</span>";
-			// 		break;
-			// 	case "Raw Material":
-			// 		value = "<span style='color:purple'>" + value + "</span>";
-			// 		break;
-			// 	case "Consumables":
-			// 		value = "<span style='color:green'>" + value + "</span>";
-			// 		break;
-			// }
-		// }
 			
 	},
 	"set_route_to_req": function (data) {
@@ -122,7 +108,7 @@ frappe.query_reports["MRP Test"] = {
 			"required_qty": data["required_qty"],
 		}
 		frappe.db.get_value("Material Planning Details", {'item_code':data["item_code"],'date':frappe.datetime.get_today()},['name']).then(exists => {
-			if (exists) {
+			if (exists.message.name) {
 				frappe.call({
 					method:"onegene.onegene.custom.mpd_details",
 					args: {
@@ -149,6 +135,37 @@ frappe.query_reports["MRP Test"] = {
 		});
 		
 	},
+	"set_route_to_cover_days": function (data) {
+		frappe.route_options = {
+			"cover_days": data.cover_days,
+		}
+		
+		frappe.call({
+			method:"onegene.onegene.report.mrp_test.mrp_test.mpd_cover_days",
+			args: {
+				"cover_days":data["cover_days"],
+			},
+			callback(r) {
+				if (r.message) {
+					let d = new frappe.ui.Dialog({
+						size: "large",
+						fields: [
+							{
+								fieldname: 'margin',
+								fieldtype: 'HTML'
+							},
+						],
+
+					});
+					d.fields_dict.margin.$wrapper.html(r.message);
+					d.show();
+				}
+			}
+		})
+
+		
+	},
+	
 	"set_route": function (data) {
 		frappe.route_options = {
 			"item_code": data["item_code"],
@@ -176,7 +193,9 @@ frappe.query_reports["MRP Test"] = {
 			}
 		})
 	},
+	
 	onload: function(report) {
+		
 		report.page.add_inner_button(__("Generate Material Request"), function() {
 			frappe.call({
 				method: "onegene.onegene.custom.return_item_type",

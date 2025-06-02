@@ -5,9 +5,27 @@ frappe.ui.form.on("Attendance - Live", {
 	refresh: function(frm) {
 		frm.disable_save()
         frm.trigger('get_data_system')
+        frappe.call({
+			method:"onegene.onegene.custom.update_last_execution",
+			callback(r){
+				if (r.message) {
+					console.log(r.message)
+					frm.set_value('last_scheduled_job_is_runned_on', r.message);
+				}
+			}
+		})
 	},
 	onload: function(frm) {
         frm.disable_save()
+        frappe.call({
+			method:"onegene.onegene.custom.update_last_execution",
+			callback(r){
+				if (r.message) {
+					console.log(r.message)
+					frm.set_value('last_scheduled_job_is_runned_on', r.message);
+				}
+			}
+		})
 	},
     departmentwise(frm){
         frm.trigger('get_data_system')

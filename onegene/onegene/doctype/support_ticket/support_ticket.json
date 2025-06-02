@@ -12,19 +12,24 @@
   "subject",
   "employee",
   "employee_mail_id",
+  "issue_related_to",
   "cb00",
   "status",
   "priority",
+  "opening_date_time",
+  "resolution_date_time",
+  "mail_sent",
   "sb_details",
   "description",
-  "section_break_19",
+  "column_break_kllg",
   "resolution_details",
-  "column_break1",
+  "section_break_19",
   "opening_date",
-  "opening_time",
   "resolution_date",
-  "resolution_time",
-  "user_resolution_time"
+  "user_resolution_time",
+  "column_break_oacx",
+  "opening_time",
+  "resolution_time"
  ],
  "fields": [
   {
@@ -79,12 +84,11 @@
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "in_global_search": 1,
-   "label": "Description",
+   "label": "Ticket Description",
    "oldfieldname": "problem_description",
    "oldfieldtype": "Text"
   },
   {
-   "collapsible": 1,
    "fieldname": "section_break_19",
    "fieldtype": "Section Break",
    "label": "Resolution Details"
@@ -97,13 +101,6 @@
    "no_copy": 1,
    "oldfieldname": "resolution_details",
    "oldfieldtype": "Text"
-  },
-  {
-   "depends_on": "eval:!doc.__islocal",
-   "fieldname": "column_break1",
-   "fieldtype": "Column Break",
-   "oldfieldtype": "Column Break",
-   "read_only": 1
   },
   {
    "default": "Today",
@@ -131,14 +128,12 @@
    "label": "Resolution Date",
    "no_copy": 1,
    "oldfieldname": "resolution_date",
-   "oldfieldtype": "Date",
-   "read_only": 1
+   "oldfieldtype": "Date"
   },
   {
    "fieldname": "resolution_time",
    "fieldtype": "Duration",
-   "label": "Resolution Time",
-   "read_only": 1
+   "label": "Resolution Time"
   },
   {
    "fieldname": "user_resolution_time",
@@ -159,11 +154,43 @@
    "fieldname": "employee_mail_id",
    "fieldtype": "Data",
    "label": "Employee mail id"
+  },
+  {
+   "default": "0",
+   "fieldname": "mail_sent",
+   "fieldtype": "Check",
+   "label": "Mail Sent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_related_to",
+   "fieldtype": "Select",
+   "label": "Issue Related To",
+   "options": "\nHR\nIT",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_kllg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_oacx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "opening_date_time",
+   "fieldtype": "Datetime",
+   "label": "Opening Date & TIme"
+  },
+  {
+   "fieldname": "resolution_date_time",
+   "fieldtype": "Datetime",
+   "label": "Resolution Date & Time"
   }
  ],
  "icon": "fa fa-ticket",
  "links": [],
- "modified": "2024-03-06 06:01:53.447741",
+ "modified": "2025-04-21 11:15:39.453073",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Support Ticket",
@@ -182,7 +209,6 @@
    "write": 1
   }
  ],
- "quick_entry": 1,
  "search_fields": "status,subject",
  "sender_field": "raised_by",
  "sort_field": "modified",

@@ -16,6 +16,7 @@ class NightShiftPlanningProcess(Document):
 	pass
 
 @frappe.whitelist()
+# read the csv file and display the Employee and Date in the uploaded csv file
 def show_csv_data(file):
 	filepath = get_file(file)
 	pps = read_csv_content(filepath[1])
@@ -49,10 +50,11 @@ def writedata(w, data):
 		w.writerow(row)
 
 @frappe.whitelist()
+# method will create night shift auditors planning list by uploading a csv file
 def create_night_shift_auditing(file, name):
 	filepath = get_file(file)
 	pps = read_csv_content(filepath[1])
-
+	
 	for pp in pps:
 		if pp[1] != 'Employee':
 			employee_name = pp[1]

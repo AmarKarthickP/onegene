@@ -1,5 +1,32 @@
 import frappe
+from frappe import _, msgprint
+from frappe.model.naming import make_autoname
+from frappe.query_builder import Order
+from frappe.query_builder.functions import Sum
+from frappe.utils import (
+	add_days,
+	ceil,
+	cint,
+	cstr,
+	date_diff,
+	floor,
+	flt,
+	formatdate,
+	get_first_day,
+	get_link_to_form,
+	getdate,
+	money_in_words,
+	rounded,
+)
+from frappe.utils.background_jobs import enqueue
+from datetime import date, datetime, timedelta
+
+import erpnext
+from erpnext.accounts.utils import get_fiscal_year
+from erpnext.setup.doctype.employee.employee import get_holiday_list_for_employee
+from erpnext.utilities.transaction_base import TransactionBase
 from hrms.hr.doctype.leave_application.leave_application import LeaveApplication
+from hrms.hr.doctype.attendance_request.attendance_request import AttendanceRequest
 from hrms.hr.doctype.compensatory_leave_request.compensatory_leave_request import CompensatoryLeaveRequest
 from hrms.hr.doctype.leave_application.leave_application import get_approved_leaves_for_period
 from hrms.hr.doctype.leave_application.leave_application import get_holidays
@@ -16,7 +43,7 @@ from frappe.utils import (
 	getdate,
 	nowdate,
 )
-
+from datetime import datetime
 from hrms.hr.utils import (
 	create_additional_leave_ledger_entry,
 	get_holiday_dates_for_employee,
@@ -35,13 +62,15 @@ import frappe
 from frappe import _
 import datetime, math
 from hrms.payroll.doctype.salary_slip.salary_slip import SalarySlip
+from hrms.payroll.doctype.salary_slip.salary_slip import get_dates
+from hrms.payroll.doctype.salary_slip.salary_slip import check_holiday
 
 class CustomLeaveApplication(LeaveApplication):
 	def validate_applicable_after(self):
+		# method to restrict the leave type after specific days from joining based on the days from leave type
 		if self.leave_type:
 			leave_type = frappe.get_doc("Leave Type", self.leave_type)
 			if leave_type.applicable_after > 0:
-				frappe.errprint("HOOOOOOOO")
 				date_of_joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
 				leave_days = get_approved_leaves_for_period(
 					self.employee, False, date_of_joining, self.from_date
@@ -282,18 +311,75 @@ class CustomCompensatoryLeaveRequest(CompensatoryLeaveRequest):
 		return allocation
 	
 class CustomSalarySlip(SalarySlip):	
+	import datetime
 	def get_date_details(self):
-		frappe.errprint("Hiiiiiii")
-		attendance = frappe.db.sql("""SELECT * FROM `tabAttendance` WHERE attendance_date BETWEEN '%s' AND '%s' AND employee = '%s' AND docstatus != 2 AND status = 'Absent'""" % (self.start_date, self.end_date, self.employee), as_dict=True)
-		absenteeism_penalty = 0
-		frappe.errprint(attendance)
-		if attendance:
-			for att in attendance:
-				if(att.custom_employee_category not in ["Staff,SUB STAFF"]):
-					frappe.errprint(att.employee)
-					absenteeism_penalty +=1
-		frappe.errprint(absenteeism_penalty)
-		self.custom_absenteeism_penalty_days_ = absenteeism_penalty
+		# attendance = frappe.db.sql("""SELECT * FROM `tabAttendance` WHERE attendance_date BETWEEN '%s' AND '%s' AND employee = '%s' AND docstatus != 2 AND status = 'Absent'""" % (self.start_date, self.end_date, self.employee), as_dict=True)
+		# absenteeism_penalty = 0
+		# # frappe.errprint(attendance)
+		# if attendance:
+		# 	for att in attendance:
+		# 		if(att.custom_employee_category not in ["Staff,Sub Staff"]):
+		# 			# frappe.errprint(att.employee)
+		# 			absenteeism_penalty +=1
+		# # frappe.errprint(absenteeism_penalty)
+		# self.custom_absenteeism_penalty_days_ = absenteeism_penalty
+		# check for unclaimed ot hours from ot balance document
 		if frappe.db.exists("OT Balance",{'from_date':self.start_date,'to_date':self.end_date,'employee':self.employee}):
 			ot_bal=frappe.db.get_value("OT Balance",{'from_date':self.start_date,'to_date':self.end_date,'employee':self.employee},['ot_balance'])
 			self.custom_overtime_hours=ot_bal
+		# take count of canteen check in to deduct from the salary
+		days = frappe.db.count("Employee Checkin", {
+		'employee': self.employee,
+		'custom_checkin_date': ["between", (self.start_date, self.end_date)],
+		'device_id': "Canteen"
+		}) or 0
+		self.custom_canteen_deduction_days = days
+		# calculation for shift allowance
+		if self.custom_employee_category in ("Staff", "Operator"):
+			attendance_count = frappe.db.count("Attendance", filters={
+				"attendance_date": ["between", (self.start_date, self.end_date)],
+				"employee": self.employee,
+				"shift": ['in', ("3", "5")],
+				"docstatus": 1,
+			})
+			self.custom_shift_allowance_days = attendance_count
+		else:
+			self.custom_shift_allowance_days = 0
+		if self.custom_employee_category == "Apprentice":
+			if self.custom_date_of_joining == "":
+				doj = frappe.get_value("Employee", {'name': self.employee}, ['date_of_joining'])
+			else:
+				doj = self.custom_date_of_joining
+			if datetime.datetime.strptime(str(self.start_date), '%Y-%m-%d').date() < datetime.datetime.strptime(str(doj), '%Y-%m-%d').date():
+				start_date = self.custom_date_of_joining
+			else:
+				start_date = self.start_date
+
+			relv_date = frappe.db.get_value('Employee', self.employee, 'relieving_date')
+			if relv_date:
+				end_date_obj = getdate(self.end_date)
+				if relv_date <= end_date_obj:
+					end_date = relv_date
+				else:
+					end_date = self.end_date
+			else:
+				end_date = self.end_date
+			dates = get_dates(start_date,end_date)
+			absent_days = 0
+			for date in dates:
+				hh = check_holiday(date,self.employee)
+				if not hh :
+					if frappe.db.exists("Attendance",{'employee':self.employee,'attendance_date':date,'docstatus':1,'status':"Absent"}):
+						absent_days += 1
+			# if absent_days > 0 :
+			# 	self.payment_days = self.payment_days - absent_days
+
+class CustomAttendanceRequest(AttendanceRequest):
+	# attendance only updated only application got approved
+	def on_submit(self):
+		if self.workflow_state=='Approved':
+			frappe.errprint("test")
+			self.create_attendance_records()
+		else:
+			pass
+

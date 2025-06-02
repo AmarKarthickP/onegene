@@ -21,7 +21,27 @@ from datetime import datetime, timedelta
 
 
 class AttendancePermission(Document):
-
+	def after_insert(self):
+		first_day = get_first_day(self.permission_date)
+		last_day = get_last_day(self.permission_date)
+		total_permission_hours = frappe.db.sql("""
+			SELECT SUM(permission_hours) AS hours 
+			FROM `tabAttendance Permission` 
+			WHERE 
+				employee = %s AND 
+				permission_date BETWEEN %s AND %s AND 
+				docstatus = 1 AND 
+				workflow_state = 'Approved'
+		""", (self.employee, first_day, last_day), as_dict=True)[0]['hours'] or 0
+		
+		# Calculate the total permission hours including the current permission
+		total_hours = int(self.permission_hours) + total_permission_hours
+		if self.employee_category=='Staff' or self.employee_category=='Sub Staff':
+			if total_hours > 4:
+				frappe.throw(_("Only 4 hours Permission applicable for the month"))
+		else:
+			if total_hours > 2:
+				frappe.throw(_("Only 2 hours Permission applicable for the month"))
 	def validate(self):
 		first_day = get_first_day(self.permission_date)
 		last_day = get_last_day(self.permission_date)
@@ -57,57 +77,65 @@ class AttendancePermission(Document):
 			# 	frappe.throw(_("Permission is not applicable. OUT time not found. Kindly use Attendance Regularize"))
 		
 	def on_submit(self):
-		attendance = frappe.get_doc('Attendance', {
-        'employee': self.employee,
-        'attendance_date': self.permission_date,
-        'docstatus': ("!=", 2)
-    	})
+		if self.workflow_state=='Approved':
+			attendance = frappe.get_doc('Attendance', {
+			'employee': self.employee,
+			'attendance_date': self.permission_date,
+			'docstatus': ("!=", 2)
+			})
 
-		if attendance:
-			frappe.db.set_value('Attendance',attendance.name,'custom_attendance_permission',self.name)
-			frappe.db.set_value('Attendance',attendance.name,'custom_permission_hours',self.permission_hours)
-			# frappe.db.set_value('Attendance',attendance.name,'status','Present')
-			frappe.db.set_value('Attendance',attendance.name,'custom_from_time',self.from_time)
-			frappe.db.set_value('Attendance',attendance.name,'custom_to_time',self.to_time)
-
-			if self.session == "First Half":
-				if attendance.custom_late_entry_time:
-					time_string = str(attendance.custom_late_entry_time)
-					hour = int(time_string.split(":")[0]) 
-					hour_with_leading_zero = "{:02d}".format(hour) 
-					if int(hour_with_leading_zero) < 2:
-						frappe.db.set_value('Attendance',attendance.name,'late_entry',0)
-						frappe.db.set_value('Attendance',attendance.name,'custom_late_entry_time',"00:00:00")
+			if attendance:
+				frappe.db.set_value('Attendance',attendance.name,'custom_attendance_permission',self.name)
+				frappe.db.set_value('Attendance',attendance.name,'custom_permission_hours',self.permission_hours)
+				frappe.db.set_value('Attendance',attendance.name,'custom_from_time',self.from_time)
+				frappe.db.set_value('Attendance',attendance.name,'custom_to_time',self.to_time)
+				if attendance.working_hours:
+					perm=int(self.permission_hours)
+					tot=float(perm)+float(attendance.working_hours)
+					if tot >=8:
+						frappe.db.set_value('Attendance',attendance.name,'status',"Present")
+					elif tot>=4 and tot<8:
+						frappe.db.set_value('Attendance',attendance.name,'status',"Half Day")
 					else:
-						
-						time_format = "%H:%M:%S"
-						time_obj = datetime.strptime(time_string, time_format)
-						frappe.errprint(time_obj)
-						new_time_obj = time_obj - timedelta(hours=2)
-						new_time_str = new_time_obj.strftime(time_format)
-						frappe.db.set_value('Attendance',attendance.name,'late_entry',1)
-						frappe.db.set_value('Attendance',attendance.name,'custom_late_entry_time',new_time_str)
-			elif self.session == "Second Half":
-				if attendance.custom_early_out_time:
-					time_string = str(attendance.custom_early_out_time)
-					hour = int(time_string.split(":")[0])  
-					hour_with_leading_zero = "{:02d}".format(hour)  
-					if int(hour_with_leading_zero) < 2:
-						frappe.db.set_value('Attendance',attendance.name,'early_exit',0)
-						frappe.db.set_value('Attendance',attendance.name,'custom_early_out_time',"00:00:00")
-					else:
-						time_format = "%H:%M:%S"
-						time_obj = datetime.strptime(time_string, time_format)
-						new_time_obj = time_obj - timedelta(hours=2)
-						new_time_str = new_time_obj.strftime(time_format)
-						frappe.db.set_value('Attendance',attendance.name,'early_exit',1)
-						frappe.db.set_value('Attendance',attendance.name,'custom_early_out_time',new_time_str)
-			elif self.session == "Flexible":
-				time_diff, hours_float = time_diff_in_hours(self.from_time, self.to_time)
-				frappe.db.set_value('Attendance', attendance.name, 'working_hours', (attendance.working_hours - hours_float))
-				frappe.db.set_value('Attendance',attendance.name,'custom_extra_hours',(attendance.custom_extra_hours - hours_float))
-				frappe.db.set_value('Attendance',attendance.name,'custom_overtime_hours',(attendance.custom_overtime_hours - hours_float))
-			frappe.db.set_value('Attendance',attendance.name,'docstatus',1)
+						frappe.db.set_value('Attendance',attendance.name,'status',"Absent")
+				if self.session == "First Half":
+					if attendance.custom_late_entry_time:
+						time_string = str(attendance.custom_late_entry_time)
+						hour = int(time_string.split(":")[0]) 
+						hour_with_leading_zero = "{:02d}".format(hour) 
+						if int(hour_with_leading_zero) < 2:
+							frappe.db.set_value('Attendance',attendance.name,'late_entry',0)
+							frappe.db.set_value('Attendance',attendance.name,'custom_late_entry_time',"00:00:00")
+						else:
+							
+							time_format = "%H:%M:%S"
+							time_obj = datetime.strptime(time_string, time_format)
+							frappe.errprint(time_obj)
+							new_time_obj = time_obj - timedelta(hours=2)
+							new_time_str = new_time_obj.strftime(time_format)
+							frappe.db.set_value('Attendance',attendance.name,'late_entry',1)
+							frappe.db.set_value('Attendance',attendance.name,'custom_late_entry_time',new_time_str)
+				elif self.session == "Second Half":
+					if attendance.custom_early_out_time:
+						time_string = str(attendance.custom_early_out_time)
+						hour = int(time_string.split(":")[0])  
+						hour_with_leading_zero = "{:02d}".format(hour)  
+						if int(hour_with_leading_zero) < 2:
+							frappe.db.set_value('Attendance',attendance.name,'early_exit',0)
+							frappe.db.set_value('Attendance',attendance.name,'custom_early_out_time',"00:00:00")
+						else:
+							time_format = "%H:%M:%S"
+							time_obj = datetime.strptime(time_string, time_format)
+							new_time_obj = time_obj - timedelta(hours=2)
+							new_time_str = new_time_obj.strftime(time_format)
+							frappe.db.set_value('Attendance',attendance.name,'early_exit',1)
+							frappe.db.set_value('Attendance',attendance.name,'custom_early_out_time',new_time_str)
+				elif self.session == "Flexible":
+					time_diff, hours_float = time_diff_in_hours(self.from_time, self.to_time)
+					frappe.db.set_value('Attendance', attendance.name, 'working_hours', (attendance.working_hours - hours_float))
+					frappe.db.set_value('Attendance',attendance.name,'custom_extra_hours',(attendance.custom_extra_hours - hours_float))
+					frappe.db.set_value('Attendance',attendance.name,'custom_overtime_hours',(attendance.custom_overtime_hours - hours_float))
+				frappe.db.set_value('Attendance',attendance.name,'docstatus',1)
 			
 
 	def on_cancel(self):

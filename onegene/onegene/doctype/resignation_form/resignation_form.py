@@ -7,7 +7,7 @@ from frappe.model.document import Document
 
 class ResignationForm(Document):
 	pass
-
+	#It will update all these below mentioned values in employee mis of that employee on approval
 	def on_submit(self):
 		if self.workflow_state == 'Approved':
 			frappe.db.set_value('Employee', self.employee,'resignation_letter_date', self.posting_date)
@@ -16,7 +16,7 @@ class ResignationForm(Document):
 			frappe.db.set_value('Employee', self.employee,'reason_for_leaving', self.reason)
 			frappe.db.set_value('Employee', self.employee,'feedback', self.feedback)
 			frappe.db.set_value('Employee', self.employee,'new_workplace', self.new_workplace)
-
+	#It will revert back the changes done on all these below mentioned values in employee mis of that employee on approval and cancel the full and final statement
 	def on_cancel(self):
 		emp = frappe.get_doc("Employee",self.employee)
 		emp.resignation_letter_date = ''
@@ -34,6 +34,7 @@ class ResignationForm(Document):
 
 
 @frappe.whitelist()
+#method was called on submission of Employee Separation
 def update_employee(doc,method):
 	if doc.workflow_state == 'Approved' and doc.custom_type == "Termination":
 		employee = frappe.get_doc('Employee', {'name':doc.employee},['name'])
@@ -44,6 +45,7 @@ def update_employee(doc,method):
 		frappe.db.set_value('Employee', employee,'reason_for_leaving', doc.custom_termination_reason)
 
 @frappe.whitelist()
+#method was called on cancel of Employee Separation
 def revert_employee(doc,method):
 	if doc.workflow_state == 'Approved' and doc.custom_type == "Termination":
 		employee = frappe.get_doc('Employee', {'name':doc.employee},['name'])

@@ -71,12 +71,12 @@ def update_order_schedule_table(doc,method):
 				pending_qty = k.pending_qty - i.qty
 				del_amount = qty * i.rate
 				pen_amount = pending_qty * i.rate
-				frappe.db.set_value("Sales Order Schedule",i.custom_against_order_schedule,'delivery_qty',qty)
-				frappe.db.set_value("Order Schedule",{"child_name":i.custom_against_order_schedule},'delivered_qty',qty)
-				frappe.db.set_value("Order Schedule",{"child_name":i.custom_against_order_schedule},'delivered_amount',del_amount)
-				frappe.db.set_value("Sales Order Schedule",i.custom_against_order_schedule,'pending_qty',pending_qty)
-				frappe.db.set_value("Order Schedule",{"child_name":i.custom_against_order_schedule},'pending_qty',pending_qty)
-				frappe.db.set_value("Order Schedule",{"child_name":i.custom_against_order_schedule},'pending_amount',pen_amount)
+				frappe.db.set_value("Sales Order Schedule Item",i.custom_against_order_schedule,'delivery_qty',qty)
+				frappe.db.set_value("Sales Order Schedule",{"child_name":i.custom_against_order_schedule},'delivered_qty',qty)
+				frappe.db.set_value("Sales Order Schedule",{"child_name":i.custom_against_order_schedule},'delivered_amount',del_amount)
+				frappe.db.set_value("Sales Order Schedule Item",i.custom_against_order_schedule,'pending_qty',pending_qty)
+				frappe.db.set_value("Sales Order Schedule",{"child_name":i.custom_against_order_schedule},'pending_qty',pending_qty)
+				frappe.db.set_value("Sales Order Schedule",{"child_name":i.custom_against_order_schedule},'pending_amount',pen_amount)
 
 @frappe.whitelist()
 def revert_order_schedule_table(doc,method):
@@ -88,20 +88,20 @@ def revert_order_schedule_table(doc,method):
 				pending_qty = k.pending_qty + i.qty
 				del_amount = qty * i.rate
 				pen_amount = pending_qty * i.rate
-				frappe.db.set_value("Sales Order Schedule",i.custom_against_order_schedule,'delivery_qty',qty)
-				frappe.db.set_value("Order Schedule",{"child_name":i.custom_against_order_schedule},'delivered_qty',qty)
-				frappe.db.set_value("Order Schedule",{"child_name":i.custom_against_order_schedule},'delivered_amount',del_amount)
+				frappe.db.set_value("Sales Order Schedule Item",i.custom_against_order_schedule,'delivery_qty',qty)
+				frappe.db.set_value("Sales Order Schedule",{"child_name":i.custom_against_order_schedule},'delivered_qty',qty)
+				frappe.db.set_value("Sales Order Schedule",{"child_name":i.custom_against_order_schedule},'delivered_amount',del_amount)
 
-				frappe.db.set_value("Sales Order Schedule",i.custom_against_order_schedule,'pending_qty',pending_qty)
-				frappe.db.set_value("Order Schedule",{"child_name":i.custom_against_order_schedule},'pending_qty',pending_qty)
-				frappe.db.set_value("Order Schedule",{"child_name":i.custom_against_order_schedule},'pending_amount',pen_amount)
+				frappe.db.set_value("Sales Order Schedule Item",i.custom_against_order_schedule,'pending_qty',pending_qty)
+				frappe.db.set_value("Sales Order Schedule",{"child_name":i.custom_against_order_schedule},'pending_qty',pending_qty)
+				frappe.db.set_value("Sales Order Schedule",{"child_name":i.custom_against_order_schedule},'pending_amount',pen_amount)
 				
 
 @frappe.whitelist()
 def open_qty_so(doc,method):
 	so = frappe.get_doc("Sales Order",doc.sales_order_number)
 	if so.customer_order_type == "Open":
-		order = frappe.get_all("Order Schedule",{"sales_order_number":doc.sales_order_number,"customer_code":doc.customer_code,"item_code":doc.item_code},["*"])
+		order = frappe.get_all("Sales Order Schedule",{"sales_order_number":doc.sales_order_number,"customer_code":doc.customer_code,"item_code":doc.item_code},["*"])
 		existing_order_schedules = {row.order_schedule for row in so.custom_schedule_table}
 		for i in order:
 			order_schedule_name = i.name
@@ -121,8 +121,8 @@ def update_child_item(doc,method):
 	if doc.customer_order_type == "Open":
 		if doc.custom_schedule_table:
 			for i in doc.custom_schedule_table:
-				order = frappe.get_doc("Order Schedule",i.order_schedule)
-				frappe.db.set_value("Order Schedule",i.order_schedule,"child_name",i.name)
+				order = frappe.get_doc("Sales Order Schedule",i.order_schedule)
+				frappe.db.set_value("Sales Order Schedule",i.order_schedule,"child_name",i.name)
 
 
 @frappe.whitelist()
@@ -131,8 +131,8 @@ def update_order_sch_qty(doc,method):
 	for i in sale.custom_schedule_table:
 		if i.order_schedule == doc.name:
 			qty = doc.qty
-			frappe.db.set_value("Sales Order Schedule",i.name,'schedule_qty',qty)
-			frappe.db.set_value("Sales Order Schedule",i.name,'pending_qty',qty)
+			frappe.db.set_value("Sales Order Schedule Item",i.name,'schedule_qty',qty)
+			frappe.db.set_value("Sales Order Schedule Item",i.name,'pending_qty',qty)
 
 @frappe.whitelist()
 def supplier_mpd(item):
@@ -211,7 +211,19 @@ def mat_req_item(item):
 	# if i > 0:
 	return data
 
+
+
+from datetime import timedelta
+import frappe
+
 @frappe.whitelist()
+def mat_req_item_expt(items, suppliers,transaction_date):
+    lead_time = frappe.db.get_value('Item Supplier', {'supplier': suppliers,'parent':items}, 'custom_lead_time_in_days')
+    exp_date=add_days(transaction_date,lead_time)
+    return exp_date
+
+@frappe.whitelist()
+#use to return the naming series with the code based on the employee category, department and designation - For Category Apprentice
 def set_naming(employee_category = None, designation = None ,department = None):
 	code = ''
 	if employee_category == "Apprentice" and department == "Driver - WAIP":
@@ -289,6 +301,7 @@ def set_naming(employee_category = None, designation = None ,department = None):
 		return code
 
 @frappe.whitelist()
+#use to return the naming series with the code based on the employee category, contractor and contractor shortcode - For Category Contractor
 def set_naming_contractor(employee_category = None,contractor = None,contractor_shortcode = None):
 	code = ''
 	if employee_category == "Contractor":
@@ -326,6 +339,7 @@ def set_naming_contractor(employee_category = None,contractor = None,contractor_
 		return code
 
 @frappe.whitelist()
+#Now this method is not used, once it was called in Attendance hooks
 def mark_wh_ot_with_employee(doc,method):
 	att = frappe.get_doc('Attendance',{'name':doc.name},['*'])
 	if att.status != "On Leave":
@@ -468,7 +482,7 @@ def check_holiday(date,emp):
 			else:
 				return "HH"
 			
-
+#Now this method is not used, it was old flow of ot from c-off
 @frappe.whitelist()
 def get_details_for_ot_coff(employee,work_from_date,work_end_date):
 	month_first_date = get_first_day(work_from_date)
@@ -512,6 +526,145 @@ def check_holiday(date,emp):
 				return "WW"     
 			else:
 				return "HH"
+
+import datetime
+@frappe.whitelist()
+def test_doj():
+	doj = "2024-05-12"
+	doj_date = datetime.datetime.strptime(doj, "%Y-%m-%d").date()
+	today = datetime.date.today()
+	one_year_ago = today - datetime.timedelta(days=365)
+	if doj_date < one_year_ago:
+		print("Hi")
+	else:
+		print("Hiii")
+
+@frappe.whitelist()
+def packing_list(sales_invoice):
+	data = frappe.db.sql("""
+		SELECT 
+			si.custom_exporter_iec, si.custom_gstin,
+			sii.custom_pallet, sii.custom_pallet_length,
+			sii.custom_pallet_breadth, sii.custom_pallet_height,
+			SUM(sii.total_weight) as net_weight,
+			SUM(sii.custom_gross_weight) as gross_weight,
+			SUM(sii.custom_no_of_boxes) as total_boxes,
+			SUM(sii.custom_no_of_pallets) as total_pallets,
+			sii.item_code, sii.description, SUM(sii.qty) as qty
+		FROM `tabSales Invoice` si
+		INNER JOIN `tabSales Invoice Item` sii ON si.name = sii.parent
+		WHERE si.name = %s
+		GROUP BY sii.custom_pallet, sii.item_code
+		ORDER BY sii.custom_pallet
+	""", (sales_invoice,), as_dict=True)
+
+	if not data:
+		return "<p>No packing list data available.</p>"
+
+	iec = data[0].custom_exporter_iec or ''
+	gstin = data[0].custom_gstin or ''
+
+	# Group by pallet
+	pallet_map = {}
+	for row in data:
+		pallet_map.setdefault(row.custom_pallet, []).append(row)
+
+	# Header and first table
+	html = f"""
+	<h3 class="text-center">Packing List</h3>
+	<p style="margin-left: 70%;">Exporter IEC: <span style="font-weight: 100;">{iec}</span></p>
+	<p style="margin-left: 70%;">GSTIN: <span style="font-weight: 100;">{gstin}</span></p>
+	<table class="mt-2" border="1" cellspacing="0" cellpadding="4">
+		<tr>
+			<td class="background text-center">Pallet</td>
+			<td class="background text-center">Item</td>
+			<td class="background text-center">Description</td>
+			<td class="background text-center">Qty (Nos)</td>
+			<td class="background text-center">No. of Boxes (Nos)</td>
+			<td class="background text-center">No. of Pallets (Nos)</td>
+		</tr>
+	"""
+	total_qty = 0
+	total_boxes = 0
+	total_pallets = 0
+	for pallet, items in pallet_map.items():
+		rowspan = len(items)
+		for idx, i in enumerate(items):
+			html += "<tr>"
+			if idx == 0:
+				html += f'<td rowspan="{rowspan}">{pallet}</td>'
+			total_qty += int(round(i.qty or 0))
+			total_boxes += int(round(i.total_boxes or 0))
+			total_pallets += int(round(i.total_pallets or 0))
+			html += f"""
+				<td>{i.item_code}</td>
+				<td>{i.description}</td>
+				<td class="text-right">{int(round(i.qty or 0))}</td>
+				<td class="text-right">{int(round(i.total_boxes or 0))}</td>
+				<td class="text-right">{int(round(i.total_pallets or 0))}</td>
+			</tr>
+			"""
+	html += f"""
+			<tr>
+				<td colspan=3 class="text-right"><b>Total</b></td>
+				<td class="text-right"><b>{total_qty}</b></td>
+				<td class="text-right"><b>{total_boxes}</b></td>
+				<td class="text-right"><b>{total_pallets}</b></td>
+			</tr>"""
+	html += "</table>"
+
+	# Second table: Pallet summary
+	html += f"""
+	<div style="width: 70%;">
+	<table class="mt-5" border="1" cellspacing="0" cellpadding="4" width=60%>
+		<tr>
+			<td rowspan="2" class="background text-center">Pallet</td>
+			<td colspan="3" class="background text-center">Dimensions (mm)</td>
+			<td colspan="2" class="background text-center">Weight (kg)</td>
+		</tr>
+		<tr>
+			<td class="background text-center">L</td>
+			<td class="background text-center">B</td>
+			<td class="background text-center">H</td>
+			<td class="background text-center">Net</td>
+			<td class="background text-center">Gross</td>
+		</tr>
+	"""
+
+	total_net = 0
+	total_gross = 0
+
+	for pallet, items in pallet_map.items():
+		first = items[0]
+		length = int(round(first.custom_pallet_length or 0))
+		breadth = int(round(first.custom_pallet_breadth or 0))
+		height = int(round(first.custom_pallet_height or 0))
+		net_weight = int(round(first.net_weight or 0))
+		gross_weight = int(round(first.gross_weight or 0))
+
+		html += f"""
+		<tr>
+			<td class="text-left">{pallet}</td>
+			<td class="text-right">{length}</td>
+			<td class="text-right">{breadth}</td>
+			<td class="text-right">{height}</td>
+			<td class="text-right">{net_weight}</td>
+			<td class="text-right">{gross_weight}</td>
+		</tr>
+		"""
+		total_net += net_weight
+		total_gross += gross_weight
+
+	html += f"""
+		<tr>
+			<td colspan="4" class="text-right"><b>Total</b></td>
+			<td class="text-right"><b>{total_net}</b></td>
+			<td class="text-right"><b>{total_gross}</b></td>
+		</tr>
+		"""
+
+	html += "</table></div>"
+	return html
 
 
 

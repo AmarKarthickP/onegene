@@ -5,9 +5,10 @@ frappe.ui.form.on("Download Salary Slip", {
 	refresh(frm) {
         var currentYear = new Date().getFullYear();
         frm.set_value('year', currentYear);
+        frm.set_value('salary_slip', '');
         if (!frappe.user.has_role('System Manager')) {
 			frappe.db.get_value("Employee",{'user_id':frappe.session.user},['employee','employee_name','employee_category'], (r) => {
-                console.log(r.message)
+                // console.log(r.message)
 				if (r){
 					frm.set_value('employee_id',r.employee)
                     frm.set_value('employee_name',r.employee_name)
@@ -26,8 +27,8 @@ frappe.ui.form.on("Download Salary Slip", {
 	},
 	year(frm) {
 		frm.trigger('get_slip')
-        var currentYear = new Date().getFullYear();
-        frm.set_value('year', currentYear);
+        // var currentYear = new Date().getFullYear();
+        // frm.set_value('year', currentYear);
 	},
 	employee_id(frm) {
 		frm.trigger('get_slip')
@@ -36,16 +37,26 @@ frappe.ui.form.on("Download Salary Slip", {
 		if (frm.doc.employee_id && frm.doc.month && frm.doc.year) {
 			frm.call('get_salary_slip')
 				.then((r) => {
-					if (r.message) {
-						frm.set_value('salary_slip', r.message[0].name)
-					}
-					else {
-						frm.set_value('salary_slip','')
-						frappe.msgprint("Salary Slip Not Found")
-					}
+					console.log("Function triggered");
+                    if (r.message && Array.isArray(r.message) && r.message.length > 0) {
+                        console.log("Message:", r.message);
+                        if (r.message[0].name) {
+                            console.log("ss found");
+                            frm.set_value('salary_slip', r.message[0].name);
+                        } else {
+                            console.log("ss not found");
+                            frm.set_value('salary_slip', '');
+                        }
+                    } else {
+                        console.log("No message or empty array");
+                        frm.set_value('salary_slip', '');
+                        frappe.msgprint("Salary Slip Not Found");
+                    }
+
+                    
 				})
 		}
-	},
+    },
     download(frm) {
 		if (frm.doc.employee_id && frm.doc.month && frm.doc.year && frm.doc.salary_slip) {
             if (frm.doc.employee_category == "Operator"){
@@ -72,6 +83,18 @@ frappe.ui.form.on("Download Salary Slip", {
                     + "&letterhead=" + encodeURIComponent
             ));
             }
+            else if (frm.doc.employee_category == "Trainee"){
+                var f_name = frm.doc.salary_slip;
+                var print_format ="Trainee";
+                window.open(frappe.urllib.get_full_url("/api/method/frappe.utils.print_format.download_pdf?"
+                        + "doctype=" + encodeURIComponent("Salary Slip")
+                        + "&name=" + encodeURIComponent(f_name)
+                        + "&trigger_print=1"
+                        + "&format=" + print_format
+                        + "&no_letterhead=0"
+                        + "&letterhead=" + encodeURIComponent
+                ));
+                }
             else if (frm.doc.employee_category == "Sub Staff"){
                 var f_name = frm.doc.salary_slip;
                 var print_format ="PAYSLIP-Staff";

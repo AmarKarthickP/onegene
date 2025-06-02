@@ -29,7 +29,6 @@ def get_att_data():
     date_now = now.strftime("%d/%m/%Y")
     time_now = now.strftime("%H:%M:%S")
     time_now_combined = f"{date_now} {time_now}"
-
     date = nowdate()
     data=[]
     apprentice_in = frappe.db.count("Attendance", {
@@ -50,6 +49,14 @@ def get_att_data():
         "custom_employee_category": 'Operator',
         "docstatus": ['!=', 2]
     })
+    
+    trainee_in = frappe.db.count("Attendance",{
+        "in_time":["!=",""],
+        "attendance_date":date,
+        "custom_employee_category":'Trainee',
+        "docstatus":["!=",2]
+    })
+    
     staff_in = frappe.db.count("Attendance", {
     "in_time": ['!=', ''],
     "attendance_date": date,
@@ -74,19 +81,27 @@ def get_att_data():
         "custom_employee_category": 'Operator',
         "docstatus": ['!=', 2]
     })
+    trainee_out = frappe.db.count("Attendance",{
+        "out_time":["!=",""],
+        "attendance_date":date,
+        "custom_employee_category":"Trainee",
+        "docstatus":["!=",2]
+    })
+    
     staff_out = frappe.db.count("Attendance", {
     "out_time": ['!=', ''],
     "attendance_date": date,
     "custom_employee_category": ['in', ['Staff', 'Sub Staff']],
     "docstatus": ['!=', 2]
     })
-    out_total=apprentice_out+staff_out+operator_out+contract_out
-    in_total=apprentice_in+staff_in+operator_in+contract_in
+    out_total=apprentice_out+staff_out+operator_out+contract_out+trainee_out
+    in_total=apprentice_in+staff_in+operator_in+contract_in+trainee_in
     bal_total=in_total-out_total
     app_bal=apprentice_in-apprentice_out
     staff_bal=staff_in-staff_out
     oper_bal=operator_in-operator_out
     con_bal=contract_in-contract_out
+    train_bal = trainee_in - trainee_out
     data.append({'des':'Description',
                  'in':'Checkin (Present)',
                  'out':'Checkout',
@@ -96,16 +111,19 @@ def get_att_data():
         "contract_in": contract_in,
         "operator_in": operator_in,
         "staff_in": staff_in,
+        "trainee_in":trainee_in,
         "apprentice_out": apprentice_out,
         "contract_out": contract_out,
         "operator_out": operator_out,
         "staff_out": staff_out,
+        "trainee_out":trainee_out,
         "out_total": out_total,
         "in_total": in_total,
         "bal_total": bal_total,
         "app_bal": app_bal,
         "staff_bal": staff_bal,
         "oper_bal": oper_bal,
+        "train_bal":train_bal,
         "con_bal": con_bal})
     return data
     

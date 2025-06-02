@@ -20,7 +20,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-11-08 11:38:46.896480",
+ "modified": "2024-10-25 17:49:49.952405",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Material Requirements Planning Settings",
@@ -39,5 +39,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

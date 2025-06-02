@@ -50,7 +50,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-01-13 10:08:04.700018",
+ "modified": "2024-10-25 17:49:43.085906",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Download Bulk Salary Slip",
@@ -69,5 +69,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

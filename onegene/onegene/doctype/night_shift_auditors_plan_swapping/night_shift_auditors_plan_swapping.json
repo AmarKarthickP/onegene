@@ -223,7 +223,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-04 10:27:04.359606",
+ "modified": "2024-10-25 17:25:07.178690",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Night Shift Auditors Plan Swapping",
@@ -233,5 +233,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "employee_name"
+ "title_field": "employee_name",
+ "track_changes": 1
 }

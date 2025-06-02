@@ -20,7 +20,7 @@ from frappe.utils import (
 )
 class TodayBirthday(Document):
 	pass
-
+# use to return the html view of the employees having birthday on the current date
 @frappe.whitelist()
 def birthday_list():
     from datetime import datetime

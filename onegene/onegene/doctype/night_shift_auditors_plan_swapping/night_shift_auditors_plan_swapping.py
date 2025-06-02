@@ -9,12 +9,12 @@ import datetime
 
 class NightShiftAuditorsPlanSwapping(Document):
 	pass
-
+	#HR User ID will be updated as the HR User ID in HR Settings
 	def validate(self):
 		user=frappe.get_doc("HR Settings")
 		self.hr_user=user.hr_user
 		
-
+	# On Final Approval the Night Shift Plan will be swapped to the two employees
 	def on_submit(self):
 		if self.workflow_state == "Approved":
 			doc1 = frappe.get_doc("Night Shift Auditors Planning List", {'employee': self.employee, 'date': self.swapping_date})
@@ -34,7 +34,7 @@ class NightShiftAuditorsPlanSwapping(Document):
 			ns_current_employee.night_shift_auditors_plan_swapping = self.name
 			ns_current_employee.insert(ignore_permissions=True)
 			frappe.db.commit()
-
+	# On Cancel the Night Shift Plan will be cancelled to the two employees
 	def on_cancel(self):
 		if frappe.db.exists("Night Shift Auditors Planning List", {'night_shift_auditors_plan_swapping': self.name}):
 			ns = frappe.get_all("Night Shift Auditors Planning List", {'night_shift_auditors_plan_swapping': self.name})
@@ -45,6 +45,7 @@ class NightShiftAuditorsPlanSwapping(Document):
 					frappe.db.commit()
 				
 @frappe.whitelist()
+# use to display the night shift plan by passing the employe code and posting date
 def get_data(employee, posting_date):
 	data = "<div style='text-align: center;'>"
 	data += "<table class='table table-bordered=1' style='width: 50%; margin: auto;'>"

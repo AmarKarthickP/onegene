@@ -28,7 +28,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-20 16:26:06.851094",
+ "modified": "2024-10-25 17:50:04.251791",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Rework Reason",
@@ -50,5 +50,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

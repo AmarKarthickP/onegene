@@ -41,7 +41,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-21 18:35:18.974693",
+ "modified": "2024-10-25 17:49:41.109307",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Software Specification",
@@ -63,5 +63,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

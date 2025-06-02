@@ -20,7 +20,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-08 12:03:44.666331",
+ "modified": "2024-10-25 17:49:45.814109",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Year",
@@ -42,5 +42,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

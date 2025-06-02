@@ -185,9 +185,9 @@ def get_all_order_type(customer,from_date,to_date):
     list = []
     dict = []
     if customer:
-        os = frappe.db.get_list("Order Schedule",{"customer_name":customer,"schedule_date": ["between",  (from_date, to_date)]},['name','sales_order_number','customer_code','customer_name','item_code','qty'])
+        os = frappe.db.get_list("Sales Order Schedule",{"customer_name":customer,"schedule_date": ["between",  (from_date, to_date)]},['name','sales_order_number','customer_code','customer_name','item_code','qty'])
     else:
-        os = frappe.db.get_list("Order Schedule",{"schedule_date": ["between",  (from_date, to_date)]},['name','sales_order_number','customer_code','customer_name','item_code','qty'])
+        os = frappe.db.get_list("Sales Order Schedule",{"schedule_date": ["between",  (from_date, to_date)]},['name','sales_order_number','customer_code','customer_name','item_code','qty'])
     for o in os:
         stock = frappe.db.sql(""" select item_code,sum(actual_qty) as qty from `tabBin` where item_code = '%s' """%(o.item_code),as_dict = 1)[0]
         if stock['qty']:
@@ -199,13 +199,15 @@ def get_all_order_type(customer,from_date,to_date):
     return list
 
 @frappe.whitelist()
+# return first and last date of the month
 def return_month_date():
     return get_first_day(today()),get_last_day(today())
 
 @frappe.whitelist()
+# return tenative plan based on the month entered
 def return_mr_qty(order_schedule,months):
     os_list = []
-    os = frappe.db.get_list("Order Schedule",{'name':order_schedule},['qty','tentative_plan_1','tentative_plan_2','tentative_plan_3'])
+    os = frappe.db.get_list("Sales Order Schedule",{'name':order_schedule},['qty','tentative_plan_1','tentative_plan_2','tentative_plan_3'])
     for o in os:
         if months == '1':
             return frappe._dict({"order_schedule": order_schedule, "qty": o.tentative_plan_1})

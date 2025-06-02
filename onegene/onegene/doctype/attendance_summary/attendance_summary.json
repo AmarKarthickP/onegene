@@ -8,6 +8,7 @@
   "section_break_ekcy",
   "employee_id",
   "employee_name",
+  "last_scheduled_job_is_runned_on",
   "column_break_zbcn",
   "month",
   "year",
@@ -67,13 +68,19 @@
    "fieldtype": "Link",
    "label": "Year",
    "options": "Year"
+  },
+  {
+   "fieldname": "last_scheduled_job_is_runned_on",
+   "fieldtype": "Datetime",
+   "label": "Last Attendance executed on",
+   "read_only": 1
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-01 09:27:02.642111",
+ "modified": "2024-10-25 17:49:37.153593",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Attendance Summary",
@@ -92,5 +99,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

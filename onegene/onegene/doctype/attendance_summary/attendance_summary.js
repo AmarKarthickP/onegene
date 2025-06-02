@@ -28,6 +28,15 @@ frappe.ui.form.on("Attendance Summary", {
 			frm.set_df_property('employee_id','read_only',1)
 		}
 		frm.trigger('get_from_to_dates')
+		frappe.call({
+			method:"onegene.onegene.custom.update_last_execution",
+			callback(r){
+				if (r.message) {
+					console.log(r.message)
+					frm.set_value('last_scheduled_job_is_runned_on', r.message);
+				}
+			}
+		})
     },
     onload(frm){
 		if(frappe.session.user != 'Administrator') {

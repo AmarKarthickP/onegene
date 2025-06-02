@@ -55,8 +55,8 @@
 #     row = []
 #     balance = 0
 #     # sales_order = frappe.db.get_list("Sales Order",{'docstatus':1},['name'])
-#     # work_order = frappe.db.get_list("Order Schedule",{'schedule_date':('between',(filters.from_date,filters.to_date))},["name"])
-#     work_order = frappe.get_all("Order Schedule",{'schedule_date':('between',(filters.from_date,filters.to_date))},["name","item_code","qty"])
+#     # work_order = frappe.db.get_list("Sales Order Schedule",{'schedule_date':('between',(filters.from_date,filters.to_date))},["name"])
+#     work_order = frappe.get_all("Sales Order Schedule",{'schedule_date':('between',(filters.from_date,filters.to_date))},["name","item_code","qty"])
 #     frappe.errprint(work_order)
 #     for i in work_order:
 #         item = frappe.get_doc('Item', i.item_code)
@@ -66,8 +66,8 @@
 #         tent_plan_i = 0
 #         tent_plan_ii = 0
 #         # sale = frappe.get_doc("Sales Order",i.name)
-#         # work = frappe.get_doc("Order Schedule",i.name)
-#         work = frappe.db.get_all("Order Schedule",{'name':i.name},["*"])
+#         # work = frappe.get_doc("Sales Order Schedule",i.name)
+#         work = frappe.db.get_all("Sales Order Schedule",{'name':i.name},["*"])
 #         frappe.errprint(work)
 #         for j in work:
 #             frappe.errprint(j.item_code)
@@ -313,7 +313,7 @@ def get_data(filters):
     data = []
     row = []
     balance = 0
-    work_order = frappe.db.sql("""select item_code , item_name , item_group , sum(qty) as qty from `tabOrder Schedule` group by item_code , item_name , item_group """%(),as_dict=1)
+    work_order = frappe.db.sql("""select item_code , item_name , item_group , sum(qty) as qty from `tabSales Order Schedule` group by item_code , item_name , item_group """%(),as_dict=1)
     for j in work_order:
         rej_allowance = frappe.get_value("Item",j.item_code,['rejection_allowance'])
         pack_size = frappe.get_value("Item",j.item_code,['pack_size'])

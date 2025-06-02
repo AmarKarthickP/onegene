@@ -121,7 +121,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-11-23 13:29:08.275554",
+ "modified": "2024-10-25 17:49:49.243863",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Material Planning",
@@ -140,5 +140,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

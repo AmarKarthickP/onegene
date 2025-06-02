@@ -72,7 +72,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-09 16:36:05.800992",
+ "modified": "2024-10-25 17:49:49.641382",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Material Planning Details",
@@ -94,5 +94,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

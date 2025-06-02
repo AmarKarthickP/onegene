@@ -49,7 +49,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-31 07:45:57.794447",
+ "modified": "2024-10-25 17:49:41.939410",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Unregistered Employee Checkin",
@@ -71,5 +71,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

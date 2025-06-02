@@ -58,7 +58,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-01-03 15:22:14.764828",
+ "modified": "2024-10-25 17:49:47.195096",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Schedule Settings",
@@ -80,5 +80,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

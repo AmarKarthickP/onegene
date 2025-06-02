@@ -1,0 +1,170 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-04-21 18:48:56.601914",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "purchase_order",
+  "qty",
+  "uom",
+  "scheduled_qty",
+  "pend_qty",
+  "dis_qty",
+  "pending_after_received",
+  "received_qty",
+  "column_break_rcqa",
+  "order_type",
+  "remarks",
+  "hsnsac",
+  "rate",
+  "amount"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Item Name"
+  },
+  {
+   "columns": 1,
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Qty",
+   "precision": "2"
+  },
+  {
+   "columns": 1,
+   "fetch_from": "item_code.stock_uom",
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_rcqa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "columns": 1,
+   "fieldname": "purchase_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Purchase Order",
+   "options": "Purchase Order",
+   "read_only_depends_on": "eval:frappe.user.has_role('Security') == 1 && !frappe.user.has_role('System Manager')"
+  },
+  {
+   "fetch_from": "purchase_order.custom_order_type",
+   "fieldname": "order_type",
+   "fieldtype": "Read Only",
+   "label": "Order Type"
+  },
+  {
+   "columns": 1,
+   "fieldname": "remarks",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "SRQ",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "item_code.gst_hsn_code",
+   "fieldname": "hsnsac",
+   "fieldtype": "Read Only",
+   "label": "HSN/SAC"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "Rate"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "Amount"
+  },
+  {
+   "columns": 1,
+   "fieldname": "scheduled_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "SQ",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "pend_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "PQ",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "columns": 1,
+   "fieldname": "dis_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "DQ",
+   "precision": "2"
+  },
+  {
+   "columns": 1,
+   "fieldname": "pending_after_received",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "PQAR",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "columns": 1,
+   "depends_on": "eval:frappe.user.has_role(\"HR User\") == 1",
+   "fieldname": "received_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "<b style=\"color: black;\">Rec. Qty</b>",
+   "permlevel": 1,
+   "precision": "2"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-05-24 13:17:34.046056",
+ "modified_by": "Administrator",
+ "module": "ONEGENE",
+ "name": "Supplier-DN Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

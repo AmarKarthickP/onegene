@@ -10,8 +10,10 @@
   "department",
   "column_break_zv4i",
   "date",
+  "month",
   "column_break_cxas",
   "plan",
+  "year",
   "column_break_vodu",
   "business_plan"
  ],
@@ -23,6 +25,7 @@
   {
    "fieldname": "date",
    "fieldtype": "Date",
+   "hidden": 1,
    "in_standard_filter": 1,
    "label": "Date"
   },
@@ -30,14 +33,17 @@
    "default": "0",
    "fieldname": "plan",
    "fieldtype": "Int",
+   "hidden": 1,
    "label": "Actual Plan"
   },
   {
    "fieldname": "department",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Department",
-   "options": "Department"
+   "options": "Department",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_zv4i",
@@ -55,13 +61,31 @@
    "default": "0",
    "fieldname": "business_plan",
    "fieldtype": "Int",
-   "label": "Business Plan"
+   "in_list_view": 1,
+   "label": "Business Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Month",
+   "options": "\nJan\nFeb\nMar\nApr\nMay\nJun\nJul\nAug\nSep\nOct\nNov\nDec",
+   "reqd": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Year",
+   "options": "Year",
+   "reqd": 1
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-23 05:58:48.900334",
+ "modified": "2025-02-11 11:16:10.341544",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Manpower Plan",
@@ -83,5 +107,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

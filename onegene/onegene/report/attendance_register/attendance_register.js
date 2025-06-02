@@ -61,6 +61,19 @@ frappe.query_reports["Attendance Register"] = {
 				department.set_input(r.department); 
 			});
 		}
+		frappe.call({
+			method: "onegene.onegene.custom.update_last_execution",
+			callback: function(response) {
+				if (response.message) {
+					// Get the last execution time and format it to 'DD-MM-YYYY HH:mm'
+					let last_execution_time = response.message;
+					let formatted_time = formatDate(last_execution_time);  // Format the time
+	
+					// Add a custom button or label with the formatted time
+					report.page.add_inner_button(__('Last Attendance executed on:' + formatted_time));
+				}
+			}
+		});
 	},
 	formatter: function(value, row, column, data, default_formatter) {
 		value = default_formatter(value, row, column, data);
@@ -77,3 +90,18 @@ frappe.query_reports["Attendance Register"] = {
 		return value;
 	}
 };
+function formatDate(timestamp) {
+    let date = new Date(timestamp);
+    
+    // Extract date components
+    let day = String(date.getDate()).padStart(2, '0');
+    let month = String(date.getMonth() + 1).padStart(2, '0');  // Months are zero-based
+    let year = date.getFullYear();
+
+    // Extract time components
+    let hours = String(date.getHours()).padStart(2, '0');
+    let minutes = String(date.getMinutes()).padStart(2, '0');
+
+    // Return formatted string: DD-MM-YYYY HH:mm
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+}

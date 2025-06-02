@@ -7,7 +7,7 @@ from frappe.model.document import Document
 
 class HeatAllowance(Document):
 	pass
-
+	# it will create a Additional Salary for the component-Heat Allowance for the mentioned employee if salary structure assigned
 	def on_submit(self):
 		if frappe.db.exists("Salary Structure Assignment", {'employee': self.employee, 'docstatus': 1}):
 			if not frappe.db.exists('Additional Salary', {'employee': self.employee, 'payroll_date': self.start_date, 'salary_component': "Heat Allowance", 'docstatus': ('!=', 2)}):
@@ -20,7 +20,7 @@ class HeatAllowance(Document):
 				heat.amount = self.heat_allowance_amount
 				heat.save(ignore_permissions=True)
 				heat.submit()
-
+	# it will cancel the  Additional Salary for the component-Heat Allowance for the mentioned employee in the mentioned date.
 	def on_cancel(self):
 		if frappe.db.exists('Additional Salary', {'employee': self.employee, 'payroll_date': self.start_date, 'salary_component': "Heat Allowance", 'docstatus': ('!=', 2)}):
 			heat = frappe.get_value("Additional Salary", {'employee': self.employee, 'payroll_date': self.start_date, 'salary_component': "Heat Allowance", 'docstatus': ('!=', 2)}, ['name'])

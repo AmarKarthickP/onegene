@@ -41,9 +41,9 @@ app_license = "MIT"
 # home_page = "login"
 
 # website user home page (by Role)
-# role_home_page = {
-#	"Role": "home_page"
-# }
+role_home_page = {
+	"Supplier": "supplier-delivery"
+}
 
 # Generators
 # ----------
@@ -58,6 +58,7 @@ app_license = "MIT"
 jinja = {
 	"methods":[
         "onegene.onegene.custom.get_data_system",
+        "onegene.onegene.utils.packing_list",
 	] 
 	# "filters": "onegene.utils.jinja_filters"
 }
@@ -115,7 +116,8 @@ jinja = {
 override_doctype_class = {
 	"Leave Application": "onegene.overrides.CustomLeaveApplication",
     "Compensatory Leave Request":"onegene.overrides.CustomCompensatoryLeaveRequest",
-	"Salary Slip": "onegene.overrides.CustomSalarySlip"
+	"Salary Slip": "onegene.overrides.CustomSalarySlip",
+    "Attendance Request": "onegene.overrides.CustomAttendanceRequest"
 }
 
 # Document Events
@@ -144,8 +146,14 @@ scheduler_events = {
         "*/20 * * * *" : [
             "onegene.mark_attendance.mark_att"
 		],
-		"0 0 26 * *" : [
+		"00 00 01 * *" : [
 			"onegene.onegene.custom.bday_allocate"
+		],
+        "0 0 * * *" : [
+			"onegene.onegene.custom.mail_alert_for_safety_stock"
+		],
+        "*/15 * * * *" : [
+			"onegene.onegene.custom.update_issue_status_from_teampro"
 		],
 	},
 	# "hourly": [
@@ -161,9 +169,9 @@ scheduler_events = {
         "onegene.tasks.daily",
         "onegene.onegene.custom.generate_production_plan"
     ],
-    # "hourly": [
-    # 	"onegene.tasks.hourly"
-    # ],
+    "hourly": [
+    	"onegene.onegene.custom.mail_alert_for_safety_stock"
+    ],
     # "weekly": [
     # 	"onegene.tasks.weekly"
     # ],
@@ -245,9 +253,9 @@ scheduler_events = {
 
 doc_events = {
 	"Sales Order":{
-		"on_submit": ["onegene.onegene.custom.get_open_order","onegene.onegene.custom.create_order_schedule_from_so"],
+		"on_submit": ["onegene.onegene.custom.get_open_order_hooks","onegene.onegene.custom.create_order_schedule_from_so"],
 		"on_cancel": ["onegene.onegene.custom.cancel_order_schedule_on_so_cancel"],
-		"on_update": "onegene.onegene.custom.return_total_schedule",
+		# "on_update": "onegene.onegene.custom.return_total_schedule",
 		"on_update_after_submit":"onegene.onegene.utils.update_child_item"
 	},
 	"Employee":{
@@ -258,7 +266,7 @@ doc_events = {
 	"User":{
 		'after_insert':'onegene.onegene.custom.remove_system_manager_role',
 	},
-	"Order Schedule":{
+	"Sales Order Schedule":{
 		"on_update": ["onegene.onegene.utils.open_qty_so","onegene.onegene.utils.update_order_sch_qty"]
 	},
 	"Delivery Note":{
@@ -275,10 +283,14 @@ doc_events = {
         "on_cancel": ["onegene.onegene.custom.att_request_cancel"],
         "validate":"onegene.onegene.custom.condition_for_ar"
 	},
+    'Scheduled Job Log':{
+       "validate":"onegene.onegene.custom.schedule_log_fail" 
+	},
+	
     # "Attendance":{
 	# 	"on_update": ["onegene.onegene.utils.mark_wh_ot_with_employee"]
 	# },
-	# "Order Schedule":{
+	# "Sales Order Schedule":{
 	# 	"on_update": "onegene.onegene.custom.get_pending_qty"
 	# # 	"on_update": "onegene.onegene.custom.get_customer_name.",
 	# },
@@ -290,7 +302,7 @@ doc_events = {
     "Leave Application":{
 		"after_insert": "onegene.onegene.custom.otbalance",
         "on_submit":"onegene.onegene.custom.otbalance",
-		"on_cancel": "onegene.onegene.utils.cancel_leave_application",
+		"on_cancel": "onegene.onegene.custom.cancel_leave_application",
 		"validate": ["onegene.onegene.custom.restrict_for_zero_balance","onegene.onegene.custom.condition_for_la"]
 	},
     "Compensatory Leave Request":{
@@ -302,4 +314,14 @@ doc_events = {
     "Night Shift Auditors Plan Swapping":{
        "validate":"onegene.onegene.custom.condition_for_nsaps", 
 	},
+    "Purchase Order": {
+        "on_submit": [
+            "onegene.onegene.custom.create_purchase_open_order",
+            "onegene.onegene.custom.create_purchase_order_schedule_from_po",
+            "onegene.onegene.custom.reload_po"
+        ],
+	},
+	"Purchase Order Schedule Item": {
+        "on_trash": "onegene.onegene.custom.delete_purchase_order_schedule",
+	}
 }

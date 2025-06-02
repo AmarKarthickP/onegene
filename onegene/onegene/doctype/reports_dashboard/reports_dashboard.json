@@ -11,7 +11,6 @@
   "section_break_rhgi",
   "date",
   "column_break_owsr",
-  "download_report",
   "print",
   "section_break_bosg",
   "from_date",
@@ -23,17 +22,23 @@
   "branch_code",
   "column_break_np9q",
   "employee",
-  "download"
+  "download",
+  "department",
+  "shift",
+  "download_report",
+  "downloaded_report",
+  "manpower_cost_report",
+  "manpower_vs_actual_report"
  ],
  "fields": [
   {
-   "depends_on": "eval:doc.report == \"Bulk Salary Slip Report\" || doc.report == \"Salary Report for HR Department to  Accounts department\"",
+   "depends_on": "eval:doc.report == \"Bulk Salary Slip Report\" || doc.report == \"Salary Report for HR Department to  Accounts department\" || doc.report == 'Manpower Usage Service Wise' || doc.report == 'Manpower Cost Report'|| doc.report == 'Manpower Cost Report'|| doc.report == 'Manpower Vs Actual Report'",
    "fieldname": "from_date",
    "fieldtype": "Date",
    "label": "From Date "
   },
   {
-   "depends_on": "eval:doc.report == \"Bulk Salary Slip Report\" || doc.report == \"Salary Report for HR Department to  Accounts department\"",
+   "depends_on": "eval:doc.report == \"Bulk Salary Slip Report\" || doc.report == \"Salary Report for HR Department to  Accounts department\" || doc.report == 'Manpower Usage Service Wise'|| doc.report == 'Manpower Cost Report'|| doc.report == 'Manpower Vs Actual Report'",
    "fieldname": "to_date",
    "fieldtype": "Date",
    "in_standard_filter": 1,
@@ -61,7 +66,7 @@
    "fieldname": "report",
    "fieldtype": "Select",
    "label": "Report",
-   "options": "\nBulk Salary Slip Report\nManpower Vs Actual Report\nSalary Report for HR Department to  Accounts department\nLive Attendance Report"
+   "options": "\nBulk Salary Slip Report\nManpower Vs Actual Report\nManpower Usage Service Wise\nManpower Cost Report\nSalary Report for HR Department to  Accounts department\nLive Attendance Report"
   },
   {
    "depends_on": "eval:doc.report == \"Bulk Salary Slip Report\" || doc.report == \"Salary Report for HR Department to  Accounts department\"",
@@ -70,16 +75,17 @@
    "label": "Download"
   },
   {
-   "depends_on": "eval:doc.report == \"Bulk Salary Slip Report\" || doc.report == \"Salary Report for HR Department to  Accounts department\"",
+   "depends_on": "eval:doc.report == \"Bulk Salary Slip Report\" || doc.report == \"Salary Report for HR Department to  Accounts department\" || doc.report == 'Manpower Usage Service Wise'|| doc.report == 'Manpower Cost Report' || doc.report == 'Manpower Vs Actual Report'",
    "fieldname": "section_break_bosg",
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:doc.report == \"Manpower Vs Actual Report\" ||doc.report == \"Live Attendance Report\"",
+   "depends_on": "eval:doc.report == \"Live Attendance Report\" ",
    "fieldname": "section_break_rhgi",
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval:doc.report == \"Bulk Salary Slip Report\" ",
    "fieldname": "date",
    "fieldtype": "Date",
    "label": "Date"
@@ -89,16 +95,17 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval:doc.date &&doc.report == \"Manpower Vs Actual Report\"",
+   "depends_on": "eval:doc.report == \"Manpower Vs Actual Report\" || doc.report == 'Manpower Usage Service Wise'|| doc.report == 'Manpower Cost Report'",
    "fieldname": "download_report",
    "fieldtype": "Button",
    "label": "Download Report"
   },
   {
-   "depends_on": "eval:doc.report == \"Salary Report for HR Department to  Accounts department\"",
+   "depends_on": "eval:doc.report == \"Salary Report for HR Department to  Accounts department\"|| doc.report == 'Manpower Cost Report'",
    "fieldname": "employee_category",
    "fieldtype": "Link",
    "label": "Employee Category",
+   "mandatory_depends_on": "eval:doc.report == 'Manpower Cost Report'",
    "options": "Employee Category"
   },
   {
@@ -140,13 +147,45 @@
   {
    "fieldname": "column_break_bwmr",
    "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.report == 'Manpower Usage Service Wise'|| doc.report == 'Manpower Vs Actual Report'",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "depends_on": "eval: doc.report == 'Manpower Usage Service Wise'|| doc.report == 'Manpower Cost Report'|| doc.report == 'Manpower Vs Actual Report'",
+   "fieldname": "shift",
+   "fieldtype": "Link",
+   "label": "Shift",
+   "options": "Shift Type"
+  },
+  {
+   "depends_on": "eval:doc.report == 'Manpower Usage Service Wise'",
+   "fieldname": "downloaded_report",
+   "fieldtype": "Attach",
+   "label": "Manpower Usage Report"
+  },
+  {
+   "depends_on": "eval:doc.report=='Manpower Cost Report'",
+   "fieldname": "manpower_cost_report",
+   "fieldtype": "Attach",
+   "label": "Manpower Cost Report"
+  },
+  {
+   "depends_on": "eval:doc.report == 'Manpower Vs Actual Report'",
+   "fieldname": "manpower_vs_actual_report",
+   "fieldtype": "Attach",
+   "label": "Manpower vs actual Report"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-06-27 16:35:31.764786",
+ "modified": "2025-03-18 11:57:21.457312",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Reports Dashboard",
@@ -165,5 +204,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

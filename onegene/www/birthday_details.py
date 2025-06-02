@@ -26,22 +26,31 @@ def get_context(context):
 def birthday_list():
     from datetime import datetime
     today_date = datetime.now().date()
-    
+    now = datetime.now()
+    date_now = now.strftime("%d/%m/%Y")
+    bday="TODAY BIRTHDAY"
+    time_now_combined = f"{bday} ({date_now})"
     employees = frappe.get_all("Employee", {"status": "Active"}, ["*"])
     data = []
     has_birthday = False
-    
     for employee in employees:
         emp_dob = employee.date_of_birth
         if emp_dob and emp_dob.month == today_date.month and emp_dob.day == today_date.day:
             image = frappe.db.get_value("File", {"attached_to_name": employee.name, "attached_to_doctype": 'Employee'}, ["file_url"])
+            bday_img = frappe.db.get_value("File", {"file_url": "/files/71-HXhletaL._AC_UF1000,1000_QL80_.jpg"}, ["file_url"])
+            bday_image = frappe.db.get_value("File", {"file_url": "/files/happy-birthday-cake-with-flowers-3d-render-pink-background_994418-11995.avif"}, ["file_url"])
+            wishes = frappe.db.get_value("File", {"file_url": "/files/Capture.PNG"}, ["file_url"])
             has_birthday = True
             row = {
                 "ID": employee.name,
                 "Name": employee.employee_name,
                 "Employee Category": employee.employee_category,
                 "Department": employee.department,
-                "Designation": employee.designation
+                "Designation": employee.designation,
+                "Title":time_now_combined,
+                "Image1":bday_img,
+                "Image2":bday_image,
+                "Wishes":wishes
             }
             if image:
                 row["Default Image URL"] = 'https://erp.onegeneindia.in/' + image

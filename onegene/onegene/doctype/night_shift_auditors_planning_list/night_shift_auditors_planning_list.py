@@ -25,9 +25,10 @@ from frappe.utils import (
 
 
 class NightShiftAuditorsPlanningList(Document):
-
+	# create compensatory off allocation for night shift
 	def on_submit(self):
 		if self.workflow_state == "Approved":
+			
 			year = self.date.year
 			year_start = datetime.datetime(year, 1, 1)
 			year_end = datetime.datetime(year, 12, 31)
@@ -35,6 +36,7 @@ class NightShiftAuditorsPlanningList(Document):
 			if leave:
 				leave_doc = frappe.get_doc("Leave Allocation", leave)
 				leave_doc.new_leaves_allocated += 1
+				leave_doc.flags.ignore_validate_update_after_submit =True
 				leave_doc.save(ignore_permissions=True)
 			else:
 				leave_doc = frappe.new_doc("Leave Allocation")
@@ -47,6 +49,7 @@ class NightShiftAuditorsPlanningList(Document):
 				leave_doc.submit()
 
 @frappe.whitelist()
+# method to check the eligiblity to create the night shift auditor planning document
 def get_att_details(emp, date):
 	from datetime import datetime, time
 	attendance_exists = frappe.db.exists("Attendance", {'employee': emp, 'attendance_date': date, 'docstatus': ('!=', 2)})

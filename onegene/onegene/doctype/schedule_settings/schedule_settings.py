@@ -45,9 +45,9 @@ def enqueue_upload(file):
 			old_qty = 0
 			if so_number:
 				sale = frappe.get_doc("Sales Order",{"name":so_number})
-				so_exist = frappe.db.exists('Order Schedule',{"sales_order_number":so_number,"customer_code":cust_code,"item_code":item})
+				so_exist = frappe.db.exists('Sales Order Schedule',{"sales_order_number":so_number,"customer_code":cust_code,"item_code":item})
 				if so_exist:
-					exist_so = frappe.get_all("Order Schedule",{"sales_order_number":so_number,"customer_code":cust_code,"item_code":item},["*"])
+					exist_so = frappe.get_all("Sales Order Schedule",{"sales_order_number":so_number,"customer_code":cust_code,"item_code":item},["*"])
 					for i in exist_so:
 						old_qty = i.qty
 						s_qty += old_qty
@@ -56,7 +56,7 @@ def enqueue_upload(file):
 						if sales_order and len(sales_order) > 0:
 							sales_order_qty = sales_order[0].get("qty")
 							if sales_order_qty >= s_qty:
-								new_doc = frappe.new_doc('Order Schedule')  
+								new_doc = frappe.new_doc('Sales Order Schedule')  
 								new_doc.customer_code = pp[0]
 								new_doc.sales_order_number = pp[1]
 								new_doc.item_code = pp[2]
@@ -71,7 +71,7 @@ def enqueue_upload(file):
 								if sales_order_qty < s_qty:
 									frappe.throw(f"<b>Validation failed:</b> Quantity <b>{s_qty}</b> exceeds the Sales Order quantity <b>{sales_order_qty}</b> in Line Item <b>{item}</b> with index <b>{idx - 1}</b>.")
 					elif sale.customer_order_type == "Open":
-						new_doc = frappe.new_doc('Order Schedule')  
+						new_doc = frappe.new_doc('Sales Order Schedule')  
 						new_doc.customer_code = pp[0]
 						new_doc.sales_order_number = pp[1]
 						new_doc.item_code = pp[2]
@@ -88,7 +88,7 @@ def enqueue_upload(file):
 					sales_order = frappe.get_all("Sales Order Item",{"parent": so_number, "item_code": item},["qty"])                
 					sales_order_qty = sales_order[0].get("qty")
 					if sale.customer_order_type == "Open":
-						new_doc = frappe.new_doc('Order Schedule')  
+						new_doc = frappe.new_doc('Sales Order Schedule')  
 						new_doc.customer_code = pp[0]
 						new_doc.sales_order_number = pp[1]
 						new_doc.item_code = pp[2]
@@ -103,7 +103,7 @@ def enqueue_upload(file):
 						if sales_order and len(sales_order) > 0:
 							sales_order_qty = sales_order[0].get("qty")
 							if s_qty <= sales_order_qty:
-								new_doc = frappe.new_doc('Order Schedule')  
+								new_doc = frappe.new_doc('Sales Order Schedule')  
 								new_doc.customer_code = pp[0]
 								new_doc.sales_order_number = pp[1]
 								new_doc.item_code = pp[2]

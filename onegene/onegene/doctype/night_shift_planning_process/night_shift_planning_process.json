@@ -69,7 +69,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-21 12:32:45.564842",
+ "modified": "2024-10-25 17:49:41.403509",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Night Shift Planning Process",
@@ -91,5 +91,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

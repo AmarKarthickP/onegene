@@ -60,7 +60,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-06 00:39:25.474412",
+ "modified": "2024-10-25 17:49:46.122452",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Operation Item List",
@@ -82,5 +82,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

@@ -96,7 +96,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-02-09 06:27:22.223445",
+ "modified": "2024-10-25 17:25:09.035649",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Heat Allowance",
@@ -119,5 +119,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

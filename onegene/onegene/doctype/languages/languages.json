@@ -18,7 +18,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-03 09:32:31.304817",
+ "modified": "2024-10-25 17:49:47.498296",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Languages",
@@ -40,5 +40,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

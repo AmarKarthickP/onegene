@@ -24,9 +24,9 @@ def get_data(filters):
     count_bom_list = []
     count_list = []
     if filters.customer:
-        os = frappe.get_list("Order Schedule", filters={"schedule_date": ["between", (filters.from_date, filters.to_date)],"customer_name":filters.customer},fields=['name', 'item_code', 'qty','schedule_date'])
+        os = frappe.get_list("Sales Order Schedule", filters={"schedule_date": ["between", (filters.from_date, filters.to_date)],"customer_name":filters.customer},fields=['name', 'item_code', 'qty','schedule_date'])
     else:
-        os = frappe.get_list("Order Schedule", filters={"schedule_date": ["between", (filters.from_date, filters.to_date)]},fields=['name', 'item_code', 'qty','schedule_date'])
+        os = frappe.get_list("Sales Order Schedule", filters={"schedule_date": ["between", (filters.from_date, filters.to_date)]},fields=['name', 'item_code', 'qty','schedule_date'])
 
 
     count = 1

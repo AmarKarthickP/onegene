@@ -48,7 +48,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-30 10:04:16.510828",
+ "modified": "2024-10-25 17:49:38.976551",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Attendance Settings",
@@ -67,5 +67,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

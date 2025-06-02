@@ -33,7 +33,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-30 14:27:49.460393",
+ "modified": "2024-10-25 17:49:42.228105",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Contractor",
@@ -55,5 +55,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

@@ -125,7 +125,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-11 13:08:04.893329",
+ "modified": "2024-10-25 17:18:10.451006",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Night Shift Auditors Planning List",
@@ -148,5 +148,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "employee_name"
+ "title_field": "employee_name",
+ "track_changes": 1
 }

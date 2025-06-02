@@ -1,74 +1,224 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2023-11-17 12:26:19.410650",
+ "autoname": "ORD-SCH-.#####",
+ "creation": "2023-10-11 12:39:18.324840",
+ "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "section_break_ibif",
+  "order_type",
+  "sales_order_number",
+  "customer_code",
+  "customer_name",
+  "column_break_n7cvb",
   "item_code",
+  "item_name",
+  "item_group",
+  "column_break_woiq",
   "schedule_date",
-  "schedule_qty",
-  "column_break_jano",
-  "delivery_qty",
+  "order_rate",
+  "tentative_plan_1",
+  "column_break_dtfp",
+  "qty",
+  "schedule_amount",
+  "tentative_plan_2",
+  "column_break_kbvn",
+  "delivered_qty",
+  "delivered_amount",
+  "tentative_plan_3",
+  "column_break_rmly",
   "pending_qty",
-  "order_schedule"
+  "pending_amount",
+  "child_name",
+  "section_break_ucqs",
+  "created_by",
+  "column_break_nsxl",
+  "remarks"
  ],
  "fields": [
   {
+   "fieldname": "schedule_date",
+   "fieldtype": "Date",
+   "label": "Schedule Date"
+  },
+  {
+   "fetch_from": "customer_name.customer_code",
+   "fieldname": "customer_code",
+   "fieldtype": "Data",
+   "label": "Customer Code"
+  },
+  {
+   "fieldname": "sales_order_number",
+   "fieldtype": "Link",
+   "label": "Sales Order Number",
+   "options": "Sales Order"
+  },
+  {
    "fieldname": "item_code",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Item Code",
    "options": "Item"
   },
   {
-   "fieldname": "schedule_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Schedule Date"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "schedule_qty",
+   "fieldname": "qty",
    "fieldtype": "Float",
-   "in_list_view": 1,
    "label": "Schedule Qty"
   },
   {
-   "fieldname": "column_break_jano",
+   "fieldname": "tentative_plan_1",
+   "fieldtype": "Float",
+   "label": "Tentative Plan 1"
+  },
+  {
+   "fieldname": "tentative_plan_2",
+   "fieldtype": "Float",
+   "label": "Tentative Plan 2"
+  },
+  {
+   "fieldname": "tentative_plan_3",
+   "fieldtype": "Float",
+   "label": "Tentative Plan 3"
+  },
+  {
+   "fieldname": "column_break_n7cvb",
    "fieldtype": "Column Break"
   },
   {
-   "allow_on_submit": 1,
-   "fieldname": "delivery_qty",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Delivery Qty"
+   "fetch_from": "sales_order_number.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Customer Name",
+   "options": "Customer"
   },
   {
-   "allow_on_submit": 1,
+   "fetch_from": "item_code.item_group",
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "label": "Item Group",
+   "options": "Item Group"
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name"
+  },
+  {
+   "fetch_from": "sales_order_number.customer_order_type",
+   "fieldname": "order_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Order Type",
+   "options": "\nFixed\nOpen"
+  },
+  {
+   "fieldname": "column_break_woiq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_dtfp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ibif",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_kbvn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_rmly",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delivered_qty",
+   "fieldtype": "Float",
+   "label": "Delivered Qty"
+  },
+  {
    "fieldname": "pending_qty",
    "fieldtype": "Float",
-   "in_list_view": 1,
    "label": "Pending Qty"
   },
   {
-   "fieldname": "order_schedule",
+   "fieldname": "pending_amount",
+   "fieldtype": "Currency",
+   "label": "Pending Amount"
+  },
+  {
+   "fieldname": "order_rate",
+   "fieldtype": "Currency",
+   "label": "Order Rate"
+  },
+  {
+   "fieldname": "schedule_amount",
+   "fieldtype": "Currency",
+   "label": "Schedule Amount"
+  },
+  {
+   "fieldname": "delivered_amount",
+   "fieldtype": "Currency",
+   "label": "Delivered Amount"
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Read Only",
+   "label": "Created By"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "column_break_nsxl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_ucqs",
+   "fieldtype": "Section Break",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "child_name",
    "fieldtype": "Data",
-   "label": "Order Schedule"
+   "hidden": 1,
+   "label": "Child Name",
+   "set_only_once": 1
   }
  ],
  "index_web_pages_for_search": 1,
- "istable": 1,
  "links": [],
- "modified": "2023-11-23 14:16:39.901858",
+ "modified": "2024-10-25 17:49:50.243773",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Sales Order Schedule",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
- "permissions": [],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

@@ -16,197 +16,48 @@ import math
 from frappe.utils import add_months, cint, flt, getdate, time_diff_in_hours
 import datetime as dt
 from datetime import datetime, timedelta
+from onegene.mark_attendance import mark_att_from_frontend_with_employee
 
 class AttendanceRegularize(Document):
-
+	#It will update the Corrected In Time, Correcetd Out Time and Corrected Shift in the attendance of the employee and calculate the working hours
 	def on_submit(self):
-		if self.corrected_shift or self.corrected_in or self.corrected_out :
-			att = frappe.db.exists('Attendance',{'employee':self.employee,'attendance_date':self.attendance_date})
-			frappe.db.set_value('Attendance', att, 'shift', self.corrected_shift)
-			frappe.db.set_value('Attendance', att, 'in_time', self.corrected_in)
-			frappe.db.set_value('Attendance', att, 'out_time', self.corrected_out)
-			attendance = frappe.db.get_all('Attendance',{'name':att},['*'])
-			for att in attendance:
-				if att.shift and att.in_time and att.out_time :
-					if att.in_time and att.out_time:
-						in_time = att.in_time
-						out_time = att.out_time
-					if isinstance(in_time, str):
-						in_time = datetime.strptime(in_time, '%Y-%m-%d %H:%M:%S')
-					if isinstance(out_time, str):
-						out_time = datetime.strptime(out_time, '%Y-%m-%d %H:%M:%S')
-					wh = time_diff_in_hours(out_time,in_time)
-					if wh > 0 :
-						if wh < 24.0:
-							time_in_standard_format = time_diff_in_timedelta(in_time,out_time)
-							frappe.db.set_value('Attendance', att.name, 'custom_total_working_hours', str(time_in_standard_format))
-							frappe.db.set_value('Attendance', att.name, 'working_hours', wh)
-						else:
-							wh = 24.0
-							frappe.db.set_value('Attendance', att.name, 'custom_total_working_hours',"23:59:59")
-							frappe.db.set_value('Attendance', att.name, 'working_hours',wh)
-						if wh < 4:
-							frappe.db.set_value('Attendance',att.name,'status','Absent')
-						elif wh >= 4 and wh < 6:
-							frappe.db.set_value('Attendance',att.name,'status','Half Day')
-						elif wh >= 6:
-							frappe.db.set_value('Attendance',att.name,'status','Present')  
-						shift_st = frappe.get_value("Shift Type",{'name':att.shift},['start_time'])
-						shift_et = frappe.get_value("Shift Type",{'name':att.shift},['end_time'])
-						shift_tot = time_diff_in_hours(shift_et,shift_st)
-						time_in_standard_format_timedelta = time_diff_in_timedelta(shift_et,out_time)
-						ot_hours = time(0,0,0)
-						hh = check_holiday(att.attendance_date,att.employee)
-						if not hh:
-							if wh > shift_tot:
-								shift_start_time = datetime.strptime(str(shift_et),'%H:%M:%S').time()
-								if att.shift in ['1','2','G'] :
-									if wh < 15 :
-										shift_date = att.attendance_date
-									else:
-										shift_date = add_days(att.attendance_date,+1)  
-								else:
-									shift_date = add_days(att.attendance_date,+1)  
-								ot_date_str = datetime.strptime(str(shift_date),'%Y-%m-%d').date()
-								shift_start_datetime = datetime.combine(ot_date_str,shift_start_time)
-								if shift_start_datetime < out_time :
-									extra_hours = out_time - shift_start_datetime
-									days = 1
-								else:
-									extra_hours = "00:00:00"
-									days = 0
-								if days == 1 :
-									duration = datetime.strptime(str(extra_hours), "%H:%M:%S")
-									total_seconds = (duration.hour * 3600 + duration.minute * 60 + duration.second)/3600
-									rounded_number = round(total_seconds, 3)
-									time_diff = datetime.strptime(str(extra_hours), '%H:%M:%S').time()
-									frappe.db.set_value('Attendance',att.name,'custom_extra_hours',rounded_number)
-									frappe.db.set_value('Attendance',att.name,'custom_total_extra_hours',extra_hours)
-									if time_diff.hour >= 1 :
-										if time_diff.minute <= 29:
-											ot_hours = time(time_diff.hour,0,0)
-										else:
-											ot_hours = time(time_diff.hour,30,0)
-									elif time_diff.hour == 0 :
-										if time_diff.minute <= 29:
-											ot_hours = time(0,0,0)
-										else:
-											ot_hours = time(time_diff.hour,30,0)
-									ftr = [3600,60,1]
-									hr = sum([a*b for a,b in zip(ftr, map(int,str(ot_hours).split(':')))])
-									ot_hr = round(hr/3600,1)
-									frappe.db.set_value('Attendance',att.name,'custom_total_overtime_hours',ot_hours)
-									frappe.db.set_value('Attendance',att.name,'custom_overtime_hours',ot_hr)
-								else:
-									frappe.db.set_value('Attendance',att.name,'custom_extra_hours',"0.0")
-									frappe.db.set_value('Attendance',att.name,'custom_total_extra_hours',"00:00:00")
-									frappe.db.set_value('Attendance',att.name,'custom_total_overtime_hours',"00:00:00")
-									frappe.db.set_value('Attendance',att.name,'custom_overtime_hours',"0.0")
-							else:
-								frappe.db.set_value('Attendance',att.name,'custom_extra_hours',"0.0")
-								frappe.db.set_value('Attendance',att.name,'custom_total_extra_hours',"00:00:00")
-								frappe.db.set_value('Attendance',att.name,'custom_total_overtime_hours',"00:00:00")
-								frappe.db.set_value('Attendance',att.name,'custom_overtime_hours',"0.0")
-						else:
-							if wh < 24.0:
-								extra_hours_float = wh
-							else:
-								extra_hours_float = 23.99
-							days = time_in_standard_format_timedelta.day
-							seconds = time_in_standard_format_timedelta.second
-							hours, remainder = divmod(seconds, 3600)
-							minutes, seconds = divmod(remainder, 60)
-							formatted_time = "{:02}:{:02}:{:02}".format(hours, minutes, seconds)
-							time_diff = datetime.strptime(str(formatted_time), '%H:%M:%S').time()
-							frappe.db.set_value('Attendance',att.name,'custom_extra_hours',extra_hours_float)
-							frappe.db.set_value('Attendance',att.name,'custom_total_extra_hours',time_diff)
-							if time_diff.hour >= 1 :
-								if time_diff.minute <= 29:
-									ot_hours = time(time_diff.hour,0,0)
-								else:
-									ot_hours = time(time_diff.hour,30,0)
-							elif time_diff.hour == 0 :
-								if time_diff.minute <= 29:
-									ot_hours = time(0,0,0)
-								else:
-									ot_hours = time(time_diff.hour,30,0)
-							ftr = [3600,60,1]
-							hr = sum([a*b for a,b in zip(ftr, map(int,str(ot_hours).split(':')))])
-							ot_hr = round(hr/3600,1)
-							frappe.db.set_value('Attendance',att.name,'custom_total_overtime_hours',ot_hours)
-							frappe.db.set_value('Attendance',att.name,'custom_overtime_hours',ot_hr)
-					else:
-						frappe.db.set_value('Attendance',att.name,'custom_total_working_hours',"00:00:00")
-						frappe.db.set_value('Attendance',att.name,'working_hours',"0.0")
-						frappe.db.set_value('Attendance',att.name,'custom_extra_hours',"0.0")
-						frappe.db.set_value('Attendance',att.name,'custom_total_extra_hours',"00:00:00")
-						frappe.db.set_value('Attendance',att.name,'custom_total_overtime_hours',"00:00:00")
-						frappe.db.set_value('Attendance',att.name,'custom_overtime_hours',"0.0")
-				else:
-					frappe.db.set_value('Attendance',att.name,'custom_total_working_hours',"00:00:00")
-					frappe.db.set_value('Attendance',att.name,'working_hours',"0.0")
-					frappe.db.set_value('Attendance',att.name,'custom_extra_hours',"0.0")
-					frappe.db.set_value('Attendance',att.name,'custom_total_extra_hours',"00:00:00")
-					frappe.db.set_value('Attendance',att.name,'custom_total_overtime_hours',"00:00:00")
-					frappe.db.set_value('Attendance',att.name,'custom_overtime_hours',"0.0")
-				hh = check_holiday(att.attendance_date,att.employee)
-				if not hh:
-					if att.shift and att.in_time:
-						shift_time = frappe.get_value(
-							"Shift Type", {'name': att.shift}, ["start_time"])
-						shift_start_time = datetime.strptime(
-							str(shift_time), '%H:%M:%S').time()
-						start_time = dt.datetime.combine(att.attendance_date,shift_start_time)
-						
-						if att.in_time > datetime.combine(att.attendance_date, shift_start_time):
-							frappe.db.set_value('Attendance', att.name, 'late_entry', 1)
-							frappe.db.set_value('Attendance', att.name, 'custom_late_entry_time', att.in_time - start_time)
-						else:
-							frappe.db.set_value('Attendance', att.name, 'late_entry', 0)
-							frappe.db.set_value('Attendance', att.name, 'custom_late_entry_time', "00:00:00")
-					if att.shift and att.out_time:
-						shift_time = frappe.get_value(
-							"Shift Type", {'name': att.shift}, ["end_time"])
-						shift_end_time = datetime.strptime(
-							str(shift_time), '%H:%M:%S').time()
-						end_time = dt.datetime.combine(att.attendance_date,shift_end_time)
-						if att.out_time < datetime.combine(att.attendance_date, shift_end_time):
-							frappe.db.set_value('Attendance', att.name, 'early_exit', 1)
-							frappe.db.set_value('Attendance', att.name, 'custom_early_out_time', att.out_time - end_time)
-						else:
-							frappe.db.set_value('Attendance', att.name, 'early_exit', 0)
-							frappe.db.set_value('Attendance', att.name, 'custom_early_out_time',"00:00:00")
-				else:
-					frappe.db.set_value('Attendance', att.name, 'late_entry', 0)
-					frappe.db.set_value('Attendance', att.name, 'custom_late_entry_time', "00:00:00")
-					frappe.db.set_value('Attendance', att.name, 'early_exit', 0)
-					frappe.db.set_value('Attendance', att.name, 'custom_early_out_time',  "00:00:00")
-			frappe.db.set_value('Attendance', att.name, 'custom_regularize_marked', 1)
-			frappe.db.set_value('Attendance', att.name, 'custom_attendance_regularize',self.name)
+		if self.workflow_state=='Approved':
+			if self.corrected_shift or self.corrected_in or self.corrected_out :
+				att = frappe.db.exists('Attendance',{'employee':self.employee,'attendance_date':self.attendance_date})
+				att_name=frappe.get_doc('Attendance',{'employee':self.employee,'attendance_date':self.attendance_date})
+				if self.shift:
+					att_name.shift= self.corrected_shift
+				if self.in_time:
+					att_name.in_time= self.corrected_in
+				if self.out_time:
+					att_name.out_time= self.corrected_out
+				att_name.custom_regularize_marked=1
+				att_name.custom_attendance_regularize=self.name
+				att_name.save(ignore_permissions=True)
+				frappe.db.commit()
+				mark_att_from_frontend_with_employee(self.attendance_date,self.employee)
 	
 
 				
 	def on_cancel(self):
-		att = frappe.db.exists('Attendance',{'employee':self.employee,'attendance_date':self.attendance_date})
+		att = frappe.db.exists('Attendance',{'custom_attendance_regularize':self.name})
 		if att:
-			att_reg = frappe.db.get_value('Attendance',{'name':att},['custom_attendance_regularize'])
-			if att_reg == self.name:
-				frappe.db.set_value('Attendance', att, 'custom_total_working_hours',"00:00:00")
-				frappe.db.set_value('Attendance', att, 'working_hours',"0.0")
-				frappe.db.set_value('Attendance', att, 'custom_extra_hours',"0.0")
-				frappe.db.set_value('Attendance', att, 'custom_total_extra_hours',"00:00:00")
-				frappe.db.set_value('Attendance', att, 'custom_total_overtime_hours',"00:00:00")
-				frappe.db.set_value('Attendance', att, 'custom_overtime_hours',"0.0")
-				frappe.db.set_value('Attendance', att, 'shift', '')
-				frappe.db.set_value('Attendance', att, 'in_time',"00:00:00")
-				frappe.db.set_value('Attendance', att, 'out_time',"00:00:00")
-				frappe.db.set_value('Attendance', att, 'custom_attendance_regularize', '')
-				frappe.db.set_value('Attendance', att, 'late_entry', 0)
-				frappe.db.set_value('Attendance', att, 'custom_late_entry_time', "00:00:00")
-				frappe.db.set_value('Attendance', att, 'early_exit', 0)
-				frappe.db.set_value('Attendance', att, 'custom_early_out_time',  "00:00:00")
+			att_name=frappe.get_doc('Attendance',{'custom_attendance_regularize':self.name})
+			if self.shift:
+				att_name.shift= ''
+			if self.in_time:
+				att_name.in_time= None
+			if self.out_time:
+				att_name.out_time= None
+			att_name.custom_regularize_marked=0
+			att_name.custom_attendance_regularize=''
+			att_name.save(ignore_permissions=True)
+			frappe.db.commit()
+			mark_att_from_frontend_with_employee(self.attendance_date,self.employee)
+	
 
 @frappe.whitelist()
+#use to get the assigned shift of the employee by passing employee code and date
 def get_assigned_shift_details(emp,att_date):
 	datalist = []
 	data = {}
@@ -253,10 +104,14 @@ def get_assigned_shift_details(emp,att_date):
 		frappe.throw(_("Attendance not Marked"))
 
 @frappe.whitelist()
+#return the difference between two times
 def time_diff_in_timedelta(time1, time2):
 		return time2 - time1
 
 @frappe.whitelist()
+
+#check the date passed is a holiday or not by the paasing the employee's holiday list 
+
 def check_holiday(date,emp):
 	holiday_list = frappe.db.get_value('Employee',{'name':emp},'holiday_list')
 	holiday = frappe.db.sql("""select `tabHoliday`.holiday_date,`tabHoliday`.weekly_off from `tabHoliday List`

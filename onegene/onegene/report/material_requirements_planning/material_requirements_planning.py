@@ -31,9 +31,9 @@ def get_data(filters):
     bom_list = []
     
     if filters.customer:
-        os = frappe.get_list("Order Schedule", filters={"schedule_date": ["between", (filters.from_date, filters.to_date)],"customer_name":filters.customer},fields=['name', 'item_code', 'qty','schedule_date'])
+        os = frappe.get_list("Sales Order Schedule", filters={"schedule_date": ["between", (filters.from_date, filters.to_date)],"customer_name":filters.customer},fields=['name', 'item_code', 'qty','schedule_date'])
     else:
-        os = frappe.get_list("Order Schedule", filters={"schedule_date": ["between", (filters.from_date, filters.to_date)]},fields=['name', 'item_code', 'qty','schedule_date'])
+        os = frappe.get_list("Sales Order Schedule", filters={"schedule_date": ["between", (filters.from_date, filters.to_date)]},fields=['name', 'item_code', 'qty','schedule_date'])
 
     for s in os:
         bom = frappe.db.get_value("BOM", {'item': s.item_code}, ['name'])

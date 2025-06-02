@@ -79,11 +79,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "2",
    "fieldname": "permission_hours",
    "fieldtype": "Select",
    "label": "Permission Hours",
-   "options": "2",
+   "options": "\n1\n2",
    "read_only": 1,
    "reqd": 1
   },
@@ -151,7 +150,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-25 08:22:22.459565",
+ "modified": "2024-12-26 14:21:53.420226",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Attendance Permission",
@@ -175,5 +174,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "employee_name"
+ "title_field": "employee_name",
+ "track_changes": 1
 }
