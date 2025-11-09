@@ -8,24 +8,26 @@
  "engine": "InnoDB",
  "field_order": [
   "item_name",
+  "uom",
   "qty",
-  "uom"
+  "actual_qty"
  ],
  "fields": [
   {
-   "columns": 6,
+   "columns": 4,
    "fieldname": "item_name",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Item Name",
-   "options": "Item"
+   "options": "\nEnd Bit\nScrap\nReturn Material"
   },
   {
    "columns": 2,
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Qty"
+   "label": "Return Qty",
+   "precision": "2"
   },
   {
    "columns": 2,
@@ -35,12 +37,20 @@
    "label": "UOM",
    "options": "UOM",
    "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "actual_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Actual Qty",
+   "precision": "2"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-05 14:14:12.567986",
+ "modified": "2025-09-06 09:29:14.127968",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Supplier-DN Scrap",

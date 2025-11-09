@@ -28,10 +28,11 @@
         <thead>
             
             <tr style="background-color:orange">
-                <td style="width: 40%;"><center><b>Description</b></center></td>
+                <td style="width: 25%;"><center><b>Description</b></center></td>
                 <td style="width: 15%;"><center><b>Operator</b></center></td>
                 <td style="width: 15%;"><center><b>Apprentice</b></center></td>
                 <td style="width: 15%;"><center><b>Contractor</b></center></td>
+                <td style="width: 15%;"><center><b>Trainee</b></center></td>
                 <td style="width: 15%;"><center><b>Total</b></center></td>
             </tr>
         </thead>
@@ -41,6 +42,7 @@
                 <td>{{ row['opot'] }}</td>
                 <td>{{ row['appot'] }}</td>
                 <td>{{ row['conot'] }}</td>
+                <td>{{ row['traot'] }}</td>
                 <td>{{ row['ottot'] }}</td>
             </tr>
             <tr style="text-align: center; line-height: 4;color: rgba(255, 106, 0, 0.81);">
@@ -48,6 +50,7 @@
                 <td>{{ row['opcoff'] }}</td>
                 <td>{{ row['appcoff'] }}</td>
                 <td>{{ row['concoff'] }}</td>
+                <td>{{ row['tracoff'] }}</td>
                 <td><b>{{ row['cofftot'] }}</b></td>
             </tr>
             <tr style="text-align: center; line-height: 4;color: red;">
@@ -55,6 +58,7 @@
                 <td>{{ row['obal'] }}</td>
                 <td>{{ row['appbal'] }}</td>
                 <td>{{ row['conbal'] }}</td>
+                <td>{{ row['trabal'] }}</td>
                 <td>{{ row['baltot'] }}</td>
             </tr>
             

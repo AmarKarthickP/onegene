@@ -10,7 +10,9 @@
  "engine": "InnoDB",
  "field_order": [
   "rejection_reason",
-  "remarks"
+  "remarks",
+  "issue_name",
+  "applicable_for"
  ],
  "fields": [
   {
@@ -23,11 +25,22 @@
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Remarks"
+  },
+  {
+   "fieldname": "applicable_for",
+   "fieldtype": "Table",
+   "label": "Applicable For",
+   "options": "Rejection Reason Applicable"
+  },
+  {
+   "fieldname": "issue_name",
+   "fieldtype": "Data",
+   "label": "Issue Name"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-25 17:50:03.976567",
+ "modified": "2025-10-07 06:11:19.189039",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Rejection Reason",
@@ -39,6 +52,7 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,

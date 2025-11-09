@@ -36,7 +36,8 @@ def birthday_list():
     for employee in employees:
         emp_dob = employee.date_of_birth
         if emp_dob and emp_dob.month == today_date.month and emp_dob.day == today_date.day:
-            image = frappe.db.get_value("File", {"attached_to_name": employee.name, "attached_to_doctype": 'Employee'}, ["file_url"])
+            image = frappe.db.get_value("File", {"attached_to_name": employee.name, "attached_to_doctype": 'Employee',"attached_to_field":'image'}, ["file_url"])
+            # image=frappe.db.get_value("Employee",{'name':employee.name},'custom_digital_signature')
             bday_img = frappe.db.get_value("File", {"file_url": "/files/71-HXhletaL._AC_UF1000,1000_QL80_.jpg"}, ["file_url"])
             bday_image = frappe.db.get_value("File", {"file_url": "/files/happy-birthday-cake-with-flowers-3d-render-pink-background_994418-11995.avif"}, ["file_url"])
             wishes = frappe.db.get_value("File", {"file_url": "/files/Capture.PNG"}, ["file_url"])

@@ -2,6 +2,15 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Attendance Regularize", {
+	onload(frm) {
+		frm.set_query("corrected_shift", function() {
+            return {
+                filters: {
+                    custom_disabled: 0
+                }
+            };
+        });
+	},
 	attendance_date(frm){
 		frappe.call({
 			method:'onegene.onegene.doctype.attendance_regularize.attendance_regularize.get_assigned_shift_details',
@@ -54,7 +63,6 @@ frappe.ui.form.on("Attendance Regularize", {
 		})
 	},
 	validate(frm){
-		console.log("HIIII")
 		if (frm.doc.corrected_in){
 			const inTime = new Date(frm.doc.corrected_in);
   			const attendanceDate = new Date(frm.doc.attendance_date);

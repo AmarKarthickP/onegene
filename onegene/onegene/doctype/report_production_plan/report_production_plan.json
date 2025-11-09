@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-09-12 18:52:45.046170",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "month",
+  "year",
+  "get_template_for_plan_qty",
+  "upload_plan_qty",
+  "column_break_muab",
+  "customer",
+  "item_group",
+  "create_plan_qty",
+  "generate_report",
+  "section_break_hbsk",
+  "html"
+ ],
+ "fields": [
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "label": "Month",
+   "options": "JAN\nFEB\nMAR\nAPR\nMAY\nJUN\nJUL\nAUG\nSEP\nOCT\nNOV\nDEC"
+  },
+  {
+   "default": "2025",
+   "fieldname": "year",
+   "fieldtype": "Link",
+   "label": "Year",
+   "options": "Year"
+  },
+  {
+   "fieldname": "get_template_for_plan_qty",
+   "fieldtype": "Button",
+   "label": "Get Template for Plan Qty"
+  },
+  {
+   "fieldname": "upload_plan_qty",
+   "fieldtype": "Attach",
+   "label": "Upload Plan Qty"
+  },
+  {
+   "fieldname": "column_break_muab",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "label": "Item Group",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "create_plan_qty",
+   "fieldtype": "Button",
+   "label": "Create Plan Qty"
+  },
+  {
+   "fieldname": "generate_report",
+   "fieldtype": "Button",
+   "label": "Generate Report"
+  },
+  {
+   "fieldname": "section_break_hbsk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html",
+   "fieldtype": "HTML"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-09-13 13:30:10.987788",
+ "modified_by": "Administrator",
+ "module": "ONEGENE",
+ "name": "Report Production Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

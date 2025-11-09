@@ -20,12 +20,17 @@ from frappe.utils import cint,today,flt,date_diff,add_days,add_months,date_diff,
 from frappe.utils.background_jobs import enqueue
 
 class ShiftSchedule(Document):
-
+	def on_trash(self):
+		if "System Manager" not in frappe.get_roles(frappe.session.user):
+			if self.workflow_state and self.workflow_state not in ["Draft", "Cancelled"]:
+				if self.docstatus == 0:
+					frappe.throw(
+						"Cannot delete this document as the workflow has moved to the next level.",
+						title="Not Permitted"
+					)
 	def get_dates(self, from_date, to_date):
 		no_of_days = date_diff(add_days(to_date, 1), from_date)
-		frappe.errprint(no_of_days)
 		dates = [add_days(from_date, i) for i in range(0, no_of_days)]
-		frappe.errprint(dates)
 		return dates
 	
 	

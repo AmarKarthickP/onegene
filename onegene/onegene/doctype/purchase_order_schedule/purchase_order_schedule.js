@@ -13,15 +13,107 @@ frappe.ui.form.on("Purchase Order Schedule", {
             frm.set_value("revised", 0)
             amendment(frm);
         }
+        frm.set_query('purchase_order_number', function() {
+            return {
+                filters: {
+                    supplier: frm.doc.supplier_name,
+                }
+            };
+        });
+    },
+
+    
+
+    item_code(frm) {
+    if (frm.doc.item_code && frm.doc.purchase_order_number) {
+        // First, check if item exists in selected PO
+        frappe.call({
+            method: "onegene.onegene.doctype.purchase_order_schedule.purchase_order_schedule.is_item_in_purchase_order",
+            args: {
+                purchase_order: frm.doc.purchase_order_number,
+                item_code: frm.doc.item_code
+            },
+            callback: function(res) {
+                if (res.message == true) {
+                    console.log(res.message)
+                    frappe.call({
+                        method: "onegene.onegene.doctype.purchase_order_schedule.purchase_order_schedule.get_item_details",
+                        args: {
+                            item_code: frm.doc.item_code
+                        },
+                        callback: function(r) {
+                            if (r.message) {
+                                frm.set_value("item_name", r.message[0]);
+                                frm.set_value("item_group", r.message[1]);
+                            }
+                        }
+                    });
+                } else {
+                    frm.set_value("item_code", null);
+                    frm.set_value("item_name", null);
+                    frm.set_value("item_group", null);
+                }
+            }
+        });
+    }
+},
+
+
+    purchase_order_number(frm) {
+        if (frm.doc.purchase_order_number && frm.doc.supplier_name) {
+            frappe.db.get_value('Purchase Order', frm.doc.purchase_order_number, 'supplier', (r) => {
+                if (r && r.supplier !== frm.doc.supplier_name) {
+                    frm.set_value('purchase_order_number', null);
+                }
+            });
+        }
+
+        if(frm.doc.purchase_order_number){
+
+            frappe.db.get_value('Purchase Order', frm.doc.purchase_order_number, 'custom_is_jobcard__subcontracted', (r) => {
+
+                if(r && r.custom_is_jobcard__subcontracted){
+                    frm.set_value('po_type',"Job Order")
+                }
+                else{
+                    frm.set_value('po_type',"Purchase Order")
+                }
+            })
+
+        }
     },
     
     refresh(frm) {
         toggle_qty_read_only(frm);
-        if (frm.doc.docstatus == 1 && !(frm.doc.pending_qty == 0) && frappe.user.has_role("Supplier")) {
-            if (frappe.user.has_role("System Manager")) {
+        if (frm.doc.docstatus == 1) {
+            if ((frappe.user.has_role("System Manager") || frappe.user.has_role("Purchase Manager") || frappe.user.has_role("Purchase Engineer")) && frm.doc.order_type == "Open") {
                 toggle_revise_button(frm);
             }
         }
+        frm.set_query('purchase_order_number', function() {
+            return {
+                filters: {
+                    supplier: frm.doc.supplier_name,
+                }
+            };
+        });
+        // Schedule Summary
+        if(!frm.doc.__islocal){
+        frappe.call({
+            method: "onegene.onegene.doctype.purchase_order_schedule.purchase_order_schedule.get_schedule_summary_html",
+            args: {
+                "supplier_code": frm.doc.supplier_code,
+                "purchase_order": frm.doc.purchase_order_number,
+                "item_code": frm.doc.item_code,
+            },
+            callback(r) {
+                if (r.message) {
+                    frm.fields_dict.schedule_summary.$wrapper.html(r.message)
+                }
+            }
+        });
+    }
+
     },
     setup(frm) {
         toggle_qty_read_only(frm);
@@ -67,10 +159,17 @@ function amendment(frm) {
                 },
                 {
                     label: __('Schedule Qty'),
-                    fieldname: 'revision_qty',
+                    fieldname: 'sch_qty',
                     fieldtype: 'Float',
                     reqd: 1,
                     default: frm.doc.qty,
+                    read_only:1
+                },
+                {
+                    label: __('Revised Qty'),
+                    fieldname: 'revision_qty',
+                    fieldtype: 'Float',
+                    reqd: 1,
                 },
                 {
                     label: __('Received Qty'),
@@ -100,6 +199,7 @@ function amendment(frm) {
                         dialog.hide();
                     } else {
                         frappe.msgprint("Cannot set Schedule Quantity less than Received Quantity");
+                        frappe.msgprint("Received Quantity-க்கு குறைவாக Schedule Quantity அமைக்க முடியாது");
                     }
                 }
             },
@@ -121,10 +221,17 @@ function toggle_revise_button(frm) {
                 },
                 {
                     label: __('Schedule Qty'),
-                    fieldname: 'revision_qty',
+                    fieldname: 'sch_qty',
                     fieldtype: 'Float',
                     reqd: 1,
                     default: frm.doc.qty,
+                    read_only:1
+                },
+                {
+                    label: __('Revised Qty'),
+                    fieldname: 'revision_qty',
+                    fieldtype: 'Float',
+                    reqd: 1,
                 },
                 {
                     label: __('Received Qty'),
@@ -138,6 +245,7 @@ function toggle_revise_button(frm) {
             primary_action: function() {
                 let values = dialog.get_values();
                 if (values.remarks && values.revision_qty) {
+                    console.log(values.revision_qty)
                     if (values.revision_qty >= frm.doc.received_qty) {
                         frappe.call({
                             method: "onegene.onegene.doctype.purchase_order_schedule.purchase_order_schedule.revise_schedule_qty",
@@ -148,7 +256,8 @@ function toggle_revise_button(frm) {
                             },
                             freeze: true,
                             freeze_message: "Revising Schedule Quantity...",
-                            callback: function () {
+                            callback: function (r) {
+                                
                                 dialog.hide();
                             }
                         });

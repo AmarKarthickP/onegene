@@ -7,6 +7,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "ot_table",
+  "section_break_bokl",
   "company",
   "column_break_rkpd",
   "department",
@@ -68,6 +70,8 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "OT Requested Date",
+   "no_copy": 1,
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -144,12 +148,21 @@
   {
    "fieldname": "section_break_byxu",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ot_table",
+   "fieldtype": "HTML",
+   "label": "OT Table"
+  },
+  {
+   "fieldname": "section_break_bokl",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-25 17:17:22.222386",
+ "modified": "2025-08-21 16:58:39.389770",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "OT Request",

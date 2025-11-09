@@ -31,7 +31,7 @@ from datetime import date
 from time import strptime
 import erpnext
 import json
-from frappe.utils import now
+from frappe.utils import now, formatdate
 from typing import Dict, Optional, Tuple, Union
 from frappe import throw,_
 from frappe.utils import flt
@@ -79,6 +79,14 @@ class PurchaseOrderSchedule(Document):
 					self.schedule_date = datetime.strptime(self.schedule_date, "%Y-%m-%d")
 		
 			self.schedule_year = self.schedule_date.year
+   
+	# 	doc = frappe.db.get_value("Purchase Order Schedule",{"item_code":self.item_code, "supplier_name":self.supplier_name,"schedule_month":self.schedule_month,"schedule_year":self.schedule_year},["name", "item_code", "schedule_month"], 
+	#    as_dict=True )
+	# 	if doc:
+	  
+	# 		name = f'<a href="/app/purchase-order-schedule/{doc.name}">{doc.name}</a>'
+	# 		frappe.throw(_(f'There is already an Sales Order Schedule {name} for the item {doc.item_code} for the month {doc.schedule_month}is available.').format(", ".join(name)))
+	  	
 
 
 	def after_insert(self):
@@ -90,8 +98,60 @@ class PurchaseOrderSchedule(Document):
 					as_dict=False
 				)
 				frappe.db.commit()
+	
+	def before_save(self):
+		if self.purchase_order_number:
+			self.currency = frappe.db.get_value("Purchase Order",{"name":self.purchase_order_number},"currency") or ""
+			exchange_rate = frappe.db.get_value("Purchase Order",{"name":self.purchase_order_number},"conversion_rate") or ""
+			if exchange_rate:
+				self.exchange_rate = exchange_rate
+				if self.order_rate:
+					self.order_rate_inr = exchange_rate * self.order_rate
+				if self.schedule_amount:
+					self.schedule_amount_inr =  exchange_rate * self.schedule_amount   
+				if self.received_amount:
+					self.received_amount_inr =  exchange_rate * self.received_amount   
+				if self.pending_amount:
+					self.pending_amount_inr =  exchange_rate * self.pending_amount
+			else:   
+				if self.order_rate:
+					self.order_rate_inr = self.exchange_rate * self.order_rate
+				if self.schedule_amount:
+					self.schedule_amount_inr =  self.exchange_rate * self.schedule_amount   
+				if self.received_amount:
+					self.received_amount_inr =  self.exchange_rate * self.received_amount   
+				if self.pending_amount:
+					self.pending_amount_inr =  self.exchange_rate * self.pending_amount	
+	
+	
+	
 
 	def validate(self):
+		
+		po_schedule = frappe.db.get_value("Purchase Order Schedule",{"item_code":self.item_code,"purchase_order_number":self.purchase_order_number,"schedule_month":self.schedule_month},["name", "item_code", "schedule_month", "docstatus"],as_dict=True)
+		
+		if po_schedule and po_schedule.docstatus != 2:
+			if self.is_new() or po_schedule.name != self.name:
+				# frappe.throw(
+				# 	f"Purchase Order Schedule for the item {po_schedule.item_code} is already available for the Month {po_schedule.schedule_month}. Instead of this you can revise qty in {po_schedule.name}"
+				# )
+				frappe.throw(
+					f"""<p>
+						Purchase Order Schedule for the item <b>{po_schedule.item_code}</b> is already available for the Month <b>{po_schedule.schedule_month}</b>.
+						Instead of this, you can revise qty in 
+						<a href="/app/purchase-order-schedule/{po_schedule.name}" target="_blank">{po_schedule.name}</a>.
+					</p>""",
+					
+				)
+				frappe.throw(
+				f"""<p>
+					Purchase Order Schedule, item <b>{po_schedule.item_code}</b> க்கானது Month <b>{po_schedule.schedule_month}</b> க்காக ஏற்கனவே உள்ளது.
+					இதற்கு பதிலாக, நீங்கள் Qty திருத்தலாம் 
+					<a href="/app/purchase-order-schedule/{po_schedule.name}" target="_blank">{po_schedule.name}</a> இல்.
+				</p>"""
+			)
+
+			
 		if self.order_type == "Open":
 			current_year = datetime.now().year
 			schedule_month = self.schedule_month.upper() if self.schedule_month else ""
@@ -114,6 +174,7 @@ class PurchaseOrderSchedule(Document):
 			frappe.throw(
 				"Cannot set Schedule Quantity less than Received Quantity",
 			)
+			frappe.throw("Received Quantity-ஐ விட குறைவாக Schedule Quantity அமைக்க முடியாது")
 		
 		# Function for amendment
 		if self.amended_from:
@@ -136,6 +197,11 @@ class PurchaseOrderSchedule(Document):
 				"The scheduled quantity has been fully received. Please create a new Order Schedule to make changes.",
 				title="Revision Not Allowed"
 			)
+			frappe.throw(
+				"திட்டமிட்ட அளவு முழுவதும் பெறப்பட்டுவிட்டது. மாற்றங்களை செய்ய புதிய Order Schedule உருவாக்கவும்.",
+				title="Revision Not Allowed"
+			)
+
 		if self.order_type == "Open":
 			if frappe.db.exists("Purchase Order",self.purchase_order_number):
 				po = frappe.get_doc("Purchase Order",self.purchase_order_number)
@@ -238,16 +304,52 @@ class PurchaseOrderSchedule(Document):
 
 			if not po_items:
 				frappe.throw(f"Item <b>{self.item_code}</b> not found in the Purchase Order <b>{self.purchase_order_number}</b>")
-
+				frappe.throw(f"Item <b>{self.item_code}</b> Purchase Order <b>{self.purchase_order_number}</b> இல் காணப்படவில்லை")
 			po_qty = po_items[0]["qty"]
 			if s_qty > po_qty:
 				frappe.throw(f"Validation failed: Quantity <b>{s_qty}</b> exceeds Purchase Order quantity <b>{po_qty}</b> for item <b>{self.item_code}</b>.")
+				frappe.throw(f"Validation failed: Item <b>{self.item_code}</b> க்கான, Quantity <b>{s_qty}</b> Purchase Order quantity <b>{po_qty}</b> ஐ விட அதிகமாக உள்ளது")
 
 	def on_update_after_submit(self):
 		self.schedule_amount = self.order_rate * self.qty
 		self.received_amount = self.order_rate * self.received_qty
 		self.pending_qty = self.qty - self.received_qty
 		self.pending_amount = self.order_rate * self.pending_qty
+  
+		if self.purchase_order_number:
+			self.currency = frappe.db.get_value("Purchase Order",{"name":self.purchase_order_number},"currency") or ""
+			self.db_set("currency", self.currency, update_modified=False)
+			exchange_rate = frappe.db.get_value("Purchase Order",{"name":self.purchase_order_number},"conversion_rate") or ""
+			
+			if exchange_rate:
+				self.exchange_rate = exchange_rate
+				self.db_set("exchange_rate", self.exchange_rate, update_modified=False)
+				if self.order_rate:
+					self.order_rate_inr = exchange_rate * self.order_rate
+					self.db_set('order_rate_inr', self.order_rate_inr, update_modified=False)
+				if self.schedule_amount:
+					self.schedule_amount_inr =  exchange_rate * self.schedule_amount
+					self.db_set('schedule_amount_inr', self.schedule_amount_inr, update_modified=False)
+				if self.received_amount:
+					self.received_amount_inr =  exchange_rate * self.received_amount 
+					self.db_set('received_amount_inr', self.received_amount_inr, update_modified=False)
+				if self.pending_amount:
+					self.pending_amount_inr =  exchange_rate * self.pending_amount
+					self.db_set('pending_amount_inr', self.pending_amount_inr, update_modified=False)
+			else:   
+				if self.order_rate:
+					self.order_rate_inr = self.exchange_rate * self.order_rate
+					self.db_set('order_rate_inr', self.order_rate_inr, update_modified=False)
+				if self.schedule_amount:
+					self.schedule_amount_inr =  self.exchange_rate * self.schedule_amount
+					self.db_set('schedule_amount_inr', self.schedule_amount_inr, update_modified=False)
+				if self.received_amount:
+					self.received_amount_inr =  self.exchange_rate * self.received_amount
+					self.db_set('received_amount_inr', self.received_amount_inr, update_modified=False)
+				if self.pending_amount:
+					self.pending_amount_inr =  self.exchange_rate * self.pending_amount
+					self.db_set('pending_amount_inr', self.pending_amount_inr, update_modified=False)
+
 
 		if frappe.db.exists("Purchase Order", self.purchase_order_number):
 			po = frappe.get_doc("Purchase Order", self.purchase_order_number)
@@ -335,11 +437,15 @@ def update_qty_in_open_order(qty, purchase_order, item_code):
 @frappe.whitelist()
 def revise_schedule_qty(name, revised_qty, remarks):
 	revised_qty = flt(revised_qty)
-	doc = frappe.get_doc("Purchase Order Schedule", name)
-
-	if revised_qty < flt(doc.received_qty):
+	pos_received_qty = frappe.db.get_value("Purchase Order Schedule", name,"received_qty")
+	received_qty = flt(pos_received_qty)
+	if received_qty == revised_qty:
+		pass
+	if revised_qty < received_qty :
 		frappe.throw("Cannot set Schedule Quantity less than Received Quantity")
+		frappe.throw("Received Quantity-ஐ விட குறைவாக Schedule Quantity அமைக்க முடியாது")
 
+	doc = frappe.get_doc("Purchase Order Schedule", name)
 	doc.append("revision", {
 		"revised_on": frappe.utils.now_datetime(),
 		"remarks": remarks,
@@ -364,6 +470,7 @@ def revise_schedule_qty(name, revised_qty, remarks):
 				"item_code": self.item_code,
 				"docstatus": 1
 			}, ["qty"]))
+			item_qty = 1 if item_qty == 0 else item_qty
 			matching_row = next((row for row in open_order.open_order_table if row.item_code == self.item_code), None)
 			if matching_row:
 				if self.disable_update_items == 1:
@@ -387,3 +494,143 @@ def get_query_for_item_table(doctype, txt, searchfield, start, page_len, filters
 		WHERE poi.parent = %s AND (poi.item_code LIKE %s OR i.item_name LIKE %s)
 		LIMIT %s OFFSET %s
 	""", (po, f"%{txt}%", f"%{txt}%", page_len, start))
+
+@frappe.whitelist()
+def get_item_details(item_code):
+	item_name, item_group = frappe.db.get_value("Item", item_code, ["item_name", "item_group"])
+	return item_name, item_group
+
+@frappe.whitelist()
+def is_item_in_purchase_order(purchase_order, item_code):
+	if not purchase_order or not item_code:
+		return False
+
+	return frappe.db.exists("Purchase Order Item", {
+		"parent": purchase_order,
+		"item_code": item_code
+	}) is not None
+
+
+
+
+@frappe.whitelist()
+def update_submitted_purchase_order_schedules():
+	submitted_docs = frappe.get_all("Purchase Order Schedule", filters={"docstatus": 1, "schedule_month": "OCT"}, fields=["name"])
+
+	for d in submitted_docs:
+		doc = frappe.get_doc("Purchase Order Schedule", d.name)
+		if not doc.purchase_order_number:
+			continue
+
+		calculate_inr_values_and_db_set(doc)
+
+	frappe.db.commit()
+
+def calculate_inr_values_and_db_set(doc):
+	if not doc.purchase_order_number:
+		return
+
+	currency = frappe.db.get_value("Purchase Order", {"name": doc.purchase_order_number}, "currency") or ""
+	exchange_rate = frappe.db.get_value("Purchase Order", {"name": doc.purchase_order_number}, "conversion_rate") or 1
+
+	doc.db_set("currency", currency, update_modified=False)
+	doc.db_set("exchange_rate", exchange_rate, update_modified=False)
+
+	# Safe calculations
+	if doc.order_rate:
+		val = flt(exchange_rate) * flt(doc.order_rate)
+		doc.db_set("order_rate_inr", val, update_modified=False)
+
+	if doc.schedule_amount:
+		val = flt(exchange_rate) * flt(doc.schedule_amount)
+		doc.db_set("schedule_amount_inr", val, update_modified=False)
+
+	if doc.received_amount:
+		val = flt(exchange_rate) * flt(doc.received_amount)
+		doc.db_set("received_amount_inr", val, update_modified=False)
+
+	if doc.pending_amount:
+		val = flt(exchange_rate) * flt(doc.pending_amount)
+		doc.db_set("pending_amount_inr", val, update_modified=False)
+
+
+@frappe.whitelist()
+def get_schedule_summary_html(supplier_code, purchase_order, item_code):
+	purchase_order_schedules = frappe.db.get_all(
+		"Purchase Order Schedule",
+		{
+			"supplier_code": supplier_code,
+			"purchase_order_number": purchase_order,
+			"item_code": item_code,
+			"docstatus": 1
+		},
+		["name", "schedule_date", "schedule_month", "qty", "received_qty", "pending_qty"],
+		order_by="schedule_date desc"
+	)
+
+	html = """
+		<div style="margin-bottom: 10px;">
+			<table width="100%" style="border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+				<tr style="background-color: #777472;">
+					<td class="text-white text-right pr-4 pt-2 pb-2"><b>S#</b></td>
+					<td class="text-white pr-2 pt-2 pb-2 pl-5"><b>Schedule Date</b></td>
+					<td class="text-white pt-2 pb-2 pl-5"><b>Schedule Month</b></td>
+					<td class="text-white text-right pr-2 pt-2 pb-2"><b>Schedule Quantity</b></td>
+					<td class="text-white text-right pr-2 pt-2 pb-2"><b>Received Quantity</b></td>
+					<td class="text-white text-right pr-3 pt-2 pb-2"><b>Pending Quantity</b></td>
+				</tr>
+	"""
+	idx = 0
+	for sos in purchase_order_schedules:
+		schedule_date = formatdate(sos.schedule_date, "dd-mm-yyyy")
+		schedule_quantity = indian_format(int(sos.qty) or 0)
+		delivered_quantity = indian_format(int(sos.received_qty) or 0)
+		pending_quantity = indian_format(int(sos.pending_qty) or 0)
+		idx += 1
+		if idx %2 == 0:
+			html += """<tr style="background-color: #e5e8eb;">"""
+		else:
+			html += "<tr>"
+		html += f"""
+				<td class="pt-2 pb-2 pr-4 text-right">{idx}</td>
+				<td class="pt-2 pb-2 pr-2 pl-5">{schedule_date}</td>
+				<td class="pt-2 pb-2 pl-5">{sos.schedule_month}</td>
+				<td class="pt-2 pb-2 pr-2 text-right ">{schedule_quantity}</td>
+				<td class="pt-2 pb-2 pr-2 text-right">{delivered_quantity}</td>
+				<td class="pt-2 pb-2 pr-3 text-right">{pending_quantity}</td>
+			</tr>
+		"""
+
+	html += """
+		</table>
+	</div>
+	"""
+	return html
+
+def indian_format(n):
+    s = s2 = str(int(n))
+    if len(s) > 3:
+        s2 = s[-3:]
+        s = s[:-3]
+        while len(s) > 2:
+            s2 = s[-2:] + "," + s2
+            s = s[:-2]
+        s2 = s + "," + s2
+    return s2
+
+
+
+# def update_po_type():
+#     pos = frappe.db.get_all("Purchase Order Schedule",filters={"docstatus":1},fields=["name","purchase_order_number"])
+    
+#     for i in pos:
+        
+        
+#         jo =frappe.db.get_value("Purchase Order",{"name":i.purchase_order_number},"custom_is_jobcard__subcontracted")
+        
+#         if jo:
+#             frappe.db.set_value("Purchase Order Schedule",i.name,"po_type","Job Order")
+#         else:
+#             frappe.db.set_value("Purchase Order Schedule",i.name,"po_type","Purchase Order")
+                
+        

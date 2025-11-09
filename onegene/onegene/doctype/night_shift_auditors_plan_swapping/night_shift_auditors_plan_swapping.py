@@ -9,6 +9,14 @@ import datetime
 
 class NightShiftAuditorsPlanSwapping(Document):
 	pass
+	def on_trash(self):
+		if "System Manager" not in frappe.get_roles(frappe.session.user):
+			if self.workflow_state and self.workflow_state not in ["Draft", "Cancelled"]:
+				if self.docstatus == 0:
+					frappe.throw(
+						"Cannot delete this document as the workflow has moved to the next level.",
+						title="Not Permitted"
+					)
 	#HR User ID will be updated as the HR User ID in HR Settings
 	def validate(self):
 		user=frappe.get_doc("HR Settings")
@@ -67,24 +75,24 @@ def get_data(employee, posting_date):
 
 @frappe.whitelist()
 def get_details(employee):
-    # Assuming you want to fetch details based on employee ID
-    employee = frappe.db.sql("""
-        SELECT * FROM `tabEmployee` WHERE name = %s
-    """, (employee,), as_dict=True)
+	# Assuming you want to fetch details based on employee ID
+	employee = frappe.db.sql("""
+		SELECT * FROM `tabEmployee` WHERE name = %s
+	""", (employee,), as_dict=True)
 
-    if employee:
-        # Assuming there's only one employee with the given ID
-        employee = employee[0]
-        employee_name = employee.get('employee_name')
-        department = employee.get('department')
-        designation = employee.get('designation')
-        user_id = employee.get('user_id')
-        employee_category = employee.get('employee_category')
+	if employee:
+		# Assuming there's only one employee with the given ID
+		employee = employee[0]
+		employee_name = employee.get('employee_name')
+		department = employee.get('department')
+		designation = employee.get('designation')
+		user_id = employee.get('user_id')
+		employee_category = employee.get('employee_category')
 
-        return employee_name, department, designation, employee_category, user_id
-    else:
-        # Handle case when no employee found
-        return None
+		return employee_name, department, designation, employee_category, user_id
+	else:
+		# Handle case when no employee found
+		return None
 
 
 

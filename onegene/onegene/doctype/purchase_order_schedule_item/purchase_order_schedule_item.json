@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "item_code",
+  "item_name",
   "schedule_date",
   "schedule_month",
   "schedule_qty",
@@ -72,12 +73,19 @@
    "fieldname": "order_schedule",
    "fieldtype": "Data",
    "label": "Order Schedule"
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-05 14:53:51.032120",
+ "modified": "2025-07-19 20:50:13.307921",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Purchase Order Schedule Item",

@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:category",
  "creation": "2023-08-20 16:55:09.745749",
@@ -20,7 +21,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-25 17:50:03.395844",
+ "modified": "2025-08-21 10:55:37.387406",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Employee Category",
@@ -32,6 +33,7 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,

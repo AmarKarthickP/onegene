@@ -17,7 +17,11 @@
   "html_4",
   "upload",
   "column_break_qlqn",
+  "response",
+  "response_data",
   "section_break_bom8n",
+  "note",
+  "error_data",
   "html"
  ],
  "fields": [
@@ -55,6 +59,7 @@
    "fieldtype": "HTML"
   },
   {
+   "depends_on": "eval: doc.attach",
    "fieldname": "upload",
    "fieldtype": "Button",
    "label": "Upload"
@@ -71,13 +76,35 @@
    "fieldname": "html",
    "fieldtype": "HTML",
    "label": "HTML"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "HTML",
+   "label": "Note"
+  },
+  {
+   "fieldname": "response",
+   "fieldtype": "HTML",
+   "label": "Response"
+  },
+  {
+   "fieldname": "response_data",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Response Data"
+  },
+  {
+   "fieldname": "error_data",
+   "fieldtype": "HTML",
+   "label": "Error Data"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-05-05 14:45:39.050989",
+ "make_attachments_public": 1,
+ "modified": "2025-11-03 16:04:22.919065",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Purchase Order Schedule Settings",

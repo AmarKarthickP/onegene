@@ -34,6 +34,22 @@
 
 <div class="d-flex flex-column align-items-center justify-content-center">
   <h3>Scan a QR Code</h3>
+
+    <!-- Show QR Code -->
+    
+    <div class="d-flex flex-row justify-content-center align-items-center" style="margin-bottom: -100px; margin-top: 50px;">
+      
+      {% if "Stock User" in user_roles %}
+      <div class="d-flex flex-column justify-content-center align-items-center">
+        <img width="150px" 
+            src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data=https://erp.onegeneindia.in/app/store-receipt/new-store-receipt-qcdyoofjri" 
+            alt="QR Code" />
+        <p class="mt-5" style="font-size: 18px; font-weight: 700;">Store Receipt</p>
+      </div>
+  {% endif %}
+    </div>
+
+
   <div class="w-100 d-flex flex-column justify-content-center align-items-center" style="min-height: 360px;">
     <div id="qr-input">
       <input type="text" id="qr-url-input" style="border-radius: 8px; padding-left: 10px; padding-top: 5px; padding-bottom: 5px; width: 100%;" placeholder="Scan using reader" />
@@ -108,6 +124,19 @@
     } else {
       alert("Input is not a valid URL.");
     }
+  });
+
+
+  frappe.call("frappe.client.get", {
+      doctype: "User",
+      name: frappe.session.user
+  }).then(r => {
+      if (r.message && r.message.roles) {
+          const roles = r.message.roles.map(x => x.role);
+          if (roles.includes("Store User")) {
+              document.getElementById("store-qr").style.display = "block";
+          }
+      }
   });
 </script>
 {% endblock %}

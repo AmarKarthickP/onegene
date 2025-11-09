@@ -3,26 +3,43 @@
 
 frappe.ui.form.on('Logistics Request', {
 	after_save(frm){
-		frm.refresh()
-		frm.reload_doc();
+		if(frm.doc.status=='Dispatched'){
+			location.reload();
+		}
+		else if(frm.doc.status=='In Transit'){
+			location.reload();
+		}
 	},
-	// recommended_ffw(frm){
-	// 	if (frm.doc.recommended_ffw){
-
-	// 	}
-	// },
+	date_of_shipment(frm){
+		if (frm.doc.date_of_shipment){
+			if (frm.doc.date_of_shipment < frappe.datetime.now_date()) {
+			frm.set_value('date_of_shipment','');
+			frappe.msgprint('Date of shipment cannot be a past date')
+		}
+		}
+		
+	},
 	recommended_ffw(frm) {
 		if (frm.doc.recommended_ffw) {
 			const matched_row = frm.doc.ffw_quotation.find(row => row.ffw_name === frm.doc.recommended_ffw);
 	
 			if (matched_row) {		
 				frm.set_value('quoted_currency', matched_row.currency);
-				frm.set_value('quoted_amount', matched_row.quoted_value);
+				frm.set_value('quoted_amount', matched_row.total_shipment_cost);
+				frm.set_value('freight_charges', matched_row.freight_charges);
+				frm.set_value('cha_charges', matched_row.cha_charges);
+				frm.set_value('handling_charges', matched_row.porthandling_charges);
+				
 			}
+			frm.set_value('ffw_final',frm.doc.recommended_ffw);
 		} else{
 			frm.set_value('quoted_currency',0);
 			frm.set_value('quoted_amount', '');
 			frm.set_value('quoted_value_in_company_currency', 0);
+			frm.set_value('ffw_final','');
+			frm.set_value('freight_charges', 0);
+			frm.set_value('cha_charges',0);
+			frm.set_value('handling_charges', 0);
 		}
 	},
 	quoted_amount(frm){
@@ -47,6 +64,7 @@ frappe.ui.form.on('Logistics Request', {
 							frm.set_value('quoted_value_in_company_currency', frm.doc.quoted_amount * rate); 
 						} else {
 							frappe.msgprint("No currency exchange rate found for " + frm.doc.quoted_currency + " to INR.");
+							frappe.msgprint("No currency exchange rate கண்டுபிடிக்கப்படவில்லை: " + frm.doc.quoted_currency + " → INR.")
 						}
 					}
 				});
@@ -93,6 +111,7 @@ frappe.ui.form.on('Logistics Request', {
 							
 						} else {
 							frappe.msgprint("No currency exchange rate found for " + frm.doc.quoted_currency + " to INR.");
+							frappe.msgprint("No currency exchange rate கண்டுபிடிக்கப்படவில்லை: " + frm.doc.quoted_currency + " → INR.")
 						}
 					}
 				});
@@ -125,7 +144,10 @@ frappe.ui.form.on('Logistics Request', {
 							frm.set_value('product_description', r.message.items)
 							frm.refresh_fields('product_description')
 						}
-						
+						frm.set_value('currency', r.message.currency)
+						frm.set_value('conv_rate', r.message.conversion_rate)
+						frm.set_Value('buying_price_list', r.message.selling_price_list)
+						frm.set_value('price_list_currency', r.message.currency)
 						frm.set_value('grand_total', r.message.grand_total)
 						frm.set_value('custom_duty', r.message.grand_total * 0.45)
 						frm.set_value('supplier', r.message.supplier)
@@ -134,12 +156,11 @@ frappe.ui.form.on('Logistics Request', {
 						// frm.set_value('country', r.message.country)
 						// frm.set_value('file_number', r.message.file_number)
 						if (frm.doc.po_so == 'Sales Invoice'){
-							
 							frm.set_value('cargo_type', r.message.custom_cargo_mode)
 							frm.set_value('product_description_so', r.message.items)
+							console.log(r.message.tems)
 							frm.set_value('inventory_destination', 'Direct to Customer')
 							frm.refresh_fields('product_description_so')
-							
 						}
 						frm.set_value('ffw', r.message.supplier)
 						frm.set_value('consignment_type', r.message.consignment_type)
@@ -156,8 +177,801 @@ frappe.ui.form.on('Logistics Request', {
 		}
 	},
 	refresh: function (frm) {
+		if (!frm.doc.__islocal &&  frm.doc.logistic_type == "Export" && frm.doc.owner == frappe.session.user) {
+		     
+		     
+		     	frm.add_custom_button(__("Export Packing List"), function () {
+			var f_name = frm.doc.name
+			var print_format = "LR Packing List";
+			window.open(frappe.urllib.get_full_url("/api/method/frappe.utils.print_format.download_pdf?"
+				+ "doctype=" + encodeURIComponent("Logistics Request")
+				+ "&name=" + encodeURIComponent(f_name)
+				+ "&trigger_print=1"
+				+ "&format=" + print_format
+				+ "&no_letterhead=0"
+			));
+		},__('Print'));
+	
+		 }
+		 if (!frm.doc.__islocal){
+			frm.set_df_property('currency_and_price_list_section','read_only',1)
+			frm.set_df_property('product_description_so','read_only',1)
+			if(frm.doc.prepared_by){
+				frm.set_df_property('customer_incoterms','read_only',1)
+				frm.set_df_property('date_of_shipment','read_only',1)
+				frm.set_df_property('pol_seaport','read_only',1)
+				frm.set_df_property('pod_seaport','read_only',1)
+				frm.set_df_property('final_destination','read_only',1)
+				frm.set_df_property('transit_time','read_only',1)
+				frm.set_df_property('transit_time','read_only',1)
+				if(frm.doc.reopened==0){
+					frm.set_df_property('ffw_quotation','read_only',1)
+					frm.set_df_property('recommended_ffw','read_only',1)
+					frm.set_df_property('insurance','read_only',1)
+				}
+				if(frm.doc.date_of_delivery){
+					frm.set_df_property('custom_shipping_bill_number_date','read_only',1)
+					frm.set_df_property('custom_shipping_bill_number','read_only',1)
+					frm.set_df_property('master_bl_number__awb','read_only',1)
+					frm.set_df_property('custom_master_bl_number__awb_date','read_only',1)
+					frm.set_df_property('normal_bl_number__awb','read_only',1)
+					frm.set_df_property('custom_normal_bl_number__awb_date','read_only',1)
+					frm.set_df_property('support_documents','read_only',1)
+				}	
+				if (frm.doc.status=='Delivered'){
+					frm.set_df_property('attachment','read_only',1)
+					frm.set_df_property('date_of_delivery','read_only',1)
+					frm.set_df_property('receive_by_name','read_only',1)
+				}	
+				frm.set_df_property('document_attached','read_only',1)
+			}
+		 }
+		 if(frm.doc.recommended_ffw){
+		 frm.add_custom_button(__("FFW"), function () {
+                    frappe.call({
+                        method: "onegene.onegene.custom.create_html_lr",
+                        args: {
+                            doc: frm.doc
+                        },
+                        callback: function (r) {
+                            if (r.message && r.message.html) {
+                                let d = new frappe.ui.Dialog({
+                                    
+                                    size: "large",
+                                    primary_action_label: __("Close"),
+                                    primary_action: function () {
+                                        d.hide();
+                                    }
+                                });
+            
+                                d.$body.html(r.message.html);
+                                d.show();
+                            } else {
+                                frappe.msgprint(__("Unable to load preview"));
+                                frappe.msgprint(__("Preview ஐ load செய்ய முடியவில்லை"))
+                            }
+                        }
+                    });
+                },__("Report View"));
+		 }
+		 if(frm.doc.logistic_type == "Export"){
+		     frm.add_custom_button(__("Export Packing List"), function () {
+                    frappe.call({
+                        method: "onegene.onegene.custom.create_html_lr_export",
+                        args: {
+                            doc: frm.doc
+                        },
+                        callback: function (r) {
+                            if (r.message && r.message.html) {
+                                let d = new frappe.ui.Dialog({
+                                    
+                                    size: "large",
+                                    primary_action_label: __("Close"),
+                                    primary_action: function () {
+                                        d.hide();
+                                    }
+                                });
+            
+                                d.$body.html(r.message.html);
+                                d.show();
+                            } else {
+                                frappe.msgprint(__("Unable to load preview"));
+                                frappe.msgprint(__("Preview ஐ load செய்ய முடியவில்லை"))
+                            }
+                        }
+                    });
+                },__("Report View"));
+                if (frm.doc.po_so == "Sales Invoice"){
+                    frm.add_custom_button(__("Export Invoice"), function () {
+                    frappe.call({
+                        method: "onegene.onegene.doctype.logistics_request.logistics_request.create_html_EI",
+                        args: {
+                            sales_invoice: frm.doc.order_no,
+                        },
+                        callback: function (r) {
+                            if (r.message && r.message.html) {
+                                let d = new frappe.ui.Dialog({
+                                    
+                                    size: "large",
+                                    primary_action_label: __("Close"),
+                                    primary_action: function () {
+                                        d.hide();
+                                    }
+                                });
+                                d.$wrapper.find(".modal-dialog").css("max-width", "65%")
+                                d.$body.html(r.message.html);
+                                d.show();
+                            } else {
+                                frappe.msgprint(__("Unable to load preview"));
+                                frappe.msgprint(__("Preview ஐ load செய்ய முடியவில்லை"))
+
+                            }
+                        }
+                    });
+                },__("Report View"));
+                    if(frm.doc.owner == frappe.session.user){
+                    frm.add_custom_button(__("Export Invoice"), function () {
+                        var print_format = "Export Invoice Print New";
+                        window.open(frappe.urllib.get_full_url("/api/method/frappe.utils.print_format.download_pdf?"
+                            + "doctype=" + encodeURIComponent("Sales Invoice")
+                            + "&name=" + encodeURIComponent(frm.doc.order_no)
+                            + "&trigger_print=1"
+                            + "&format=" + print_format
+                            + "&no_letterhead=0"
+                        ));
+                    }, __('Print'));
+                    }
+                }
+                // frm.add_custom_button(__("Packing List Logistics"),
+                //     function () {
+                //         frappe.call({
+                //             method: "onegene.onegene.custom.packing_list",
+                //             args: {
+                //                 sales_invoice: frm.doc.order_no
+                //             },
+                //             callback: function (r) {
+                //                 if (r.message) {   
+                //                     let d = new frappe.ui.Dialog({
+                //                         title: __("Packing List Logistics"),
+                //                         size: "large",
+                //                         primary_action_label: __("Close"),
+                //                         primary_action: function () {
+                //                             d.hide();
+                //                         }
+                //                     });
+                
+                //                     d.$body.html(r.message);
+                //                     d.show();
+                //                 } else {
+                //                     frappe.msgprint(__("Unable to load preview"));
+                //                 }
+                //             }
+                //         });
+                //     },
+                //     __("Report View")
+                // );
+
+		 }
+		if (frm.doc.status === 'LR Approved') {
+            frm.fields_dict.status.$wrapper.css("color", "red");
+        } else {
+            
+            frm.fields_dict.status.$wrapper.css("color", "");
+        }
+
+		if (frm.doc.status=='Approved by HOD' || frm.doc.status=='Approved by SMD' || frm.doc.status=='Pending for SMD' || frm.doc.status=='LR Approved' ){
+			frm.set_df_property('etd','read_only',0)
+			frm.set_df_property('eta','read_only',0)
+		}
+		if(frm.doc.status=='Draft'){
+			frm.set_df_property('section_break_kvnk','hidden',1)
+			frm.set_df_property('support_doc','hidden',1)
+			frm.set_df_property('custom_section_break_sloza','hidden',1)
+			frm.set_df_property('proof_of_delivery_section','hidden',1)
+			
+		}
+		// console.log(frm.doc.ffw_approved)
+		if(frm.doc.recommended_ffw && frm.doc.ffw_approved==0){
+			// console.log('ffw0')
+			frm.set_df_property('support_doc','hidden',1)
+			frm.set_df_property('custom_section_break_sloza','hidden',1)
+			frm.set_df_property('section_break_kvnk','hidden',1)
+			frm.set_df_property('proof_of_delivery_section','hidden',1)
+			if (frm.doc.rejected_by_finance==1 && frm.doc.reopened==0){
+				$.each(frm.fields_dict, function(fieldname, field) {
+                            frm.set_df_property(fieldname, 'read_only', 1);
+                        });
+            	frm.set_intro(__("Re-Open this document to edit it."));
+				frm.add_custom_button(__("Re-Open"), function () { 
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						frm.set_value('reopened', 1);
+						frm.save().then(() => {
+							window.location.reload();
+						});
+					}
+						
+				});
+				
+
+			}
+			else if (frm.doc.reopened==1){
+				
+				frm.add_custom_button(__("Send to Finance"), function () {
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						
+						frm.set_value('status', 'Pending for Finance');
+						frm.set_value('sent_for_finance', 1);
+						frm.set_value('rejected_by_finance', 0);
+						frm.set_value('reopened', 0);
+			
+						frm.save();
+					}
+
+					else{
+						frappe.msgprint("Only Logistics User will move it for approval.")
+						frappe.msgprint("Approval க்காக அதை move செய்யும் அதிகாரம் Logistics User-க்கு மட்டுமே உள்ளது.")
+					}
+						
+					})
+			}
+			else if (frm.doc.approved_by_finance==0 && frm.doc.sent_for_finance==0 && frm.doc.cargo_type=='Sea' && frm.doc.scope_of_delivery=='Wonjin' && (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("Send to Finance"), function () {
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						frm.set_value('status', 'Pending for Finance');
+							frm.set_value('sent_for_finance', 1);
+							frm.set_value("prepared_by",frappe.session.user);
+							let now = frappe.datetime.now_datetime();  
+							frm.set_value("prepared_by_time", now);
+						frm.save().then(() => {
+							
+							console.log("Form saved successfully");
+
+							
+						});
+					}
+
+					else{
+						frappe.msgprint("Only Logistics User will move it for approval.")
+						frappe.msgprint("Approval க்காக அதை move செய்யும் அதிகாரம் Logistics User-க்கு மட்டுமே உள்ளது.")
+
+					}
+						
+					},__("Action"))
+			}
+			if (frm.doc.approved_by_finance==0 && frm.doc.sent_for_finance==1 && frm.doc.cargo_type=='Sea' && frm.doc.scope_of_delivery=='Wonjin' && (frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("Finance Approval"), function () {
+					if(frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager')){
+						frm.set_value('status','Pending for CMD')
+						
+						frm.set_value('approved_by_finance',1)
+						frm.set_value('approved_by_finance_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('finance',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only Accounts Manager will allow to approve")
+						frappe.msgprint("Approval க்காக அதை move செய்யும் அதிகாரம் Accounts Manager-க்கு மட்டுமே உள்ளது.")
+
+					}
+					
+					},__("Action"))
+				frm.add_custom_button(__("Reject"), function () { 
+					if (frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager')) {
+						const d = new frappe.ui.Dialog({
+							title: 'Enter Rejection Remark',
+							fields: [
+								{
+									label: 'Rejection Remark',
+									fieldname: 'rejection_remark',
+									fieldtype: 'Small Text',
+									reqd: 1
+								}
+							],
+							primary_action_label: 'Submit',
+							primary_action(values) {
+								if (!values.rejection_remark) {
+									frappe.msgprint('Rejection Remark is required');
+									frappe.msgprint('Rejection Remark தேவையானது')
+									return;
+								}
+								frm.set_value('rejection_remark', values.rejection_remark);
+								
+								frm.set_value('status', 'Rejected by Finance');
+								frm.set_value('sent_for_finance', 0);
+								frm.set_value('rejected_by_finance', 1);
+								frm.save().then(() => {
+									console.log("Saved successfully");
+									location.reload();
+								});
+
+								d.hide(); 
+							}
+						});
+
+						d.show();
+
+					} else {
+						frappe.msgprint("Only Accounts Manager will be allowed to reject");
+						frappe.msgprint("Reject செய்யும் அதிகாரம் Accounts Manager-க்கு மட்டுமே உள்ளது.")
+					}
+				}, __("Action"));
+			}
+			
+			if(frm.doc.approved_by_cmd==0 && frm.doc.status=='Pending for CMD' &&frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin'  && (frappe.user.has_role('CMD') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("CMD Approval"), function () {
+					if(frappe.user.has_role('CMD') || frappe.user.has_role('System Manager')){
+						frm.set_value('status','Pending for SMD')
+						
+						frm.set_value('approved_by_cmd',1)
+						frm.set_value('approved_by_cmd_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('cmd',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only CMD will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் CMD -க்கு மட்டுமே உள்ளது.")
+
+					}
+					
+					}, __('Action'));
+			}
+			
+			else if(frm.doc.approved_by_smd==0 && frm.doc.status=='Pending for SMD' &&frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin'  && (frappe.user.has_role('SMD') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("SMD Approval"), function () {
+					if(frappe.user.has_role('SMD') || frappe.user.has_role('System Manager')){
+						frm.set_value('status', 'LR Approved');
+						
+						frm.set_value('approved_by_smd',1)
+						frm.set_value('approved_by_smd_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('ffw_approved',1)
+						frm.set_value('smd',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+							if (frm.doc.po_so === "Sales Invoice" && frm.doc.order_no) {
+								frappe.call({
+										method: "onegene.onegene.custom.update_workflow",
+										args: {
+											doctype: "Sales Invoice",
+											name: frm.doc.order_no,
+										},
+										callback: function(r) {
+											if (!r.exc) {
+												frm.set_value("workflow_state", 'LR Approved');
+												frm.refresh_field("workflow_state");
+											}
+										}
+										
+									});
+							} else {
+								location.reload(); 
+							}
+						});
+					}
+					else{
+						frappe.msgprint("Only SMD will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் SMD -க்கு மட்டுமே உள்ளது.")
+					}
+					
+					},__("Action"))
+			}
+			else if (frm.doc.rejected_by_finance==1 && frm.doc.reopened==0){
+				$.each(frm.fields_dict, function(fieldname, field) {
+                            frm.set_df_property(fieldname, 'read_only', 1);
+                        });
+            	frm.set_intro(__("Re-Open this document to edit it."));
+				if ((frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager'))){
+					frm.add_custom_button(__("Re-Open"), function () { 
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						frm.set_value('reopened', 1);
+						frm.save().then(() => {
+							window.location.reload();
+						});
+					}
+						
+				});
+				}
+
+			}
+			else if (frm.doc.reopened==1 && (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("Send to Finance"), function () {
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						
+						frm.set_value('status', 'Pending for Finance');
+						frm.set_value('sent_for_finance', 1);
+						frm.set_value('rejected_by_finance', 0);
+						frm.set_value('reopened', 0);
+						// frm.set_value("prepared_by",frappe.session.user);
+						// let now = frappe.datetime.now_datetime();  
+						// frm.set_value("prepared_by_time", now);
+
+						frm.save();
+					}
+
+					else{
+						frappe.msgprint("Only Logistics User will move it for approval.")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் Logistics User-க்கு மட்டுமே உள்ளது.")
+					}
+						
+					})
+			}
+			else if((frm.doc.approved_by_finance==0 && frm.doc.sent_for_finance==0 && (frm.doc.cargo_type=='Sea' || frm.doc.cargo_type=='Air') &&frm.doc.scope_of_delivery=='Customer') && (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("Send to Finance"), function () {
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						
+						frm.set_value('status', 'Pending for Finance');
+						frm.set_value('sent_for_finance', 1);
+						frm.set_value("prepared_by",frappe.session.user);
+						let now = frappe.datetime.now_datetime();  
+						frm.set_value("prepared_by_time", now);
+
+						frm.save().then(() => {
+							console.log("Form saved successfully");
+
+							
+						});
+					}
+
+					else{
+						frappe.msgprint("Only Logistics User will move it for approval.")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் Logistics User-க்கு மட்டுமே உள்ளது.")
+					}
+						
+					},__("Action"))
+			}
+			else if((frm.doc.approved_by_finance==0 && frm.doc.sent_for_finance==1 && (frm.doc.cargo_type=='Sea' || frm.doc.cargo_type=='Air') &&frm.doc.scope_of_delivery=='Customer' && (frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager')))){
+				frm.add_custom_button(__("Finance Approval"), function () {
+					if (frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager')) {
+						
+						frm.set_value('status', 'LR Approved');
+						frm.set_value('approved_by_finance', 1);
+						frm.set_value('approved_by_finance_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('ffw_approved', 1);
+						frm.set_df_property('section_break_kvnk', 'hidden', 1);
+						frm.set_value('finance', frappe.session.user);
+
+						frm.save().then(() => {
+							console.log("Form saved successfully");
+							if (frm.doc.po_so === "Sales Invoice" && frm.doc.order_no) {
+								frappe.call({
+									method: "onegene.onegene.custom.update_workflow",
+									args: {
+										doctype: "Sales Invoice",
+										name: frm.doc.order_no,
+									},
+									callback: function(r) {
+										if (!r.exc) {
+											frm.set_value("workflow_state", 'LR Approved');
+											frm.refresh_field("workflow_state");
+										}
+									}
+									
+								});
+							} else {
+								location.reload(); 
+							}
+							
+						});
+					}
+
+					else{
+						frappe.msgprint("Only Finance will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் Finance -க்கு மட்டுமே உள்ளது.")
+					}
+						
+					},__("Action"))
+				frm.add_custom_button(__("Reject"), function () { 
+					if (frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager')) {
+						const d = new frappe.ui.Dialog({
+							title: 'Enter Rejection Remark',
+							fields: [
+								{
+									label: 'Rejection Remark',
+									fieldname: 'rejection_remark',
+									fieldtype: 'Small Text',
+									reqd: 1
+								}
+							],
+							primary_action_label: 'Submit',
+							primary_action(values) {
+								if (!values.rejection_remark) {
+									frappe.msgprint('Rejection Remark is required');
+									frappe.msgprint('Rejection Remark தேவையானது')
+									return;
+								}
+								frm.set_value('rejection_remark', values.rejection_remark);
+								
+								frm.set_value('status', 'Rejected by Finance');
+								frm.set_value('sent_for_finance', 0);
+								frm.set_value('rejected_by_finance', 1);
+								frm.save().then(() => {
+									console.log("Saved successfully");
+									location.reload();
+								});
+
+								d.hide(); 
+							}
+						});
+
+						d.show();
+
+					} else {
+						frappe.msgprint("Only Accounts Manager will be allowed to reject");
+						frappe.msgprint("Reject செய்யும் அதிகாரம் Accounts Manager-க்கு மட்டுமே உள்ளது.")
+
+					}
+				}, __("Action"));
+
+			}
+			// else if((frm.doc.approved_by_hod==0 && (frm.doc.cargo_type=='Sea' || frm.doc.cargo_type=='Air') &&frm.doc.scope_of_delivery=='Customer')){
+			// 	frm.add_custom_button(__("HOD Approval"), function () {
+			// 		if (frappe.user.has_role('HOD') || frappe.user.has_role('System Manager')) {
+			// 			frm.set_value('status', 'LR Approved');
+			// 			
+			// 			frm.set_value('approved_by_hod', 1);
+			// 			frm.set_value('ffw_approved', 1);
+			// 			frm.set_df_property('section_break_kvnk', 'hidden', 1);
+			// 			frm.set_value('hod', frappe.session.user);
+
+			// 			frm.save().then(() => {
+			// 				console.log("Form saved successfully");
+
+			// 				if (frm.doc.po_so === "Sales Invoice" && frm.doc.order_no) {
+			// 					frappe.call({
+			// 						method: "frappe.client.get",
+			// 						args: {
+			// 							doctype: "Sales Invoice",
+			// 							name: frm.doc.order_no
+			// 						},
+			// 						callback: function (r) {
+			// 							if (r.message) {
+			// 								const salesInvoice = r.message;
+			// 								frappe.call({
+			// 									method: "onegene.onegene.custom.update_workflow",
+			// 									args: {
+			// 										doctype: "Sales Invoice",
+			// 										name: frm.doc.order_no,
+			// 									},
+			// 									callback: function(r) {
+			// 										if (!r.exc) {
+			// 											frm.set_value("workflow_state", 'LR Approved');
+			// 											frm.refresh_field("workflow_state");
+			// 										}
+			// 									}
+												
+			// 								});
+			// 							} 
+			// 						}
+			// 					});
+			// 				} else {
+			// 					location.reload(); 
+			// 				}
+			// 			});
+			// 		}
+
+			// 		else{
+			// 			frappe.msgprint("Only HOD will allow to approve")
+			// 		}
+						
+			// 		},__("Action"))
+			// }
+			else if (frm.doc.rejected_by_finance==1 && frm.doc.reopened==0){
+				$.each(frm.fields_dict, function(fieldname, field) {
+                            frm.set_df_property(fieldname, 'read_only', 1);
+                        });
+            	frm.set_intro(__("Re-Open this document to edit it."));
+				if ((frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager'))){
+					frm.add_custom_button(__("Re-Open"), function () { 
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						frm.set_value('reopened', 1);
+						frm.save().then(() => {
+							window.location.reload();
+						});
+					}
+						
+				});
+				}
+				
+				
+
+			}
+			else if (frm.doc.reopened==1 && (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("Send to Finance"), function () {
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						
+						frm.set_value('status', 'Pending for Finance');
+						frm.set_value('sent_for_finance', 1);
+						frm.set_value('rejected_by_finance', 0);
+						frm.set_value('reopened', 0);
+						// frm.set_value("prepared_by",frappe.session.user);
+						// let now = frappe.datetime.now_datetime(); 
+						// frm.set_value("prepared_by_time", now);
+						
+						frm.save();
+					}
+
+					else{
+						frappe.msgprint("Only Logistics User will move it for approval.")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் Logistics User-க்கு மட்டுமே உள்ளது.")
+					}
+						
+					})
+			}
+			else if(frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin' && frm.doc.approved_by_finance==0 && frm.doc.sent_for_finance==0 && (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("Send to Finance"), function () {
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						
+						frm.set_value('status', 'Pending for Finance');
+						frm.set_value('sent_for_finance', 1);
+						frm.set_value("prepared_by",frappe.session.user);
+						let now = frappe.datetime.now_datetime();  
+						frm.set_value("prepared_by_time", now);
+						
+
+						frm.save().then(() => {
+							console.log("Form saved successfully");
+
+							
+						});
+					}
+
+					else{
+						frappe.msgprint("Only Logistics User will move it for approval.")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் Logistics User-க்கு மட்டுமே உள்ளது.")
+					}
+						
+					},__("Action"))
+			}
+			else if(frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin' && frm.doc.approved_by_finance==0 && frm.doc.sent_for_finance==1 && (frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("Finance Approval"), function () {
+					if(frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager')){
+						
+						frm.set_value('status','Pending for BMD')
+						frm.set_value('approved_by_finance',1)
+						frm.set_value('approved_by_finance_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('finance',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only Accounts Manager will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் Accounts Manager-க்கு மட்டுமே உள்ளது.")
+					}
+						
+					},__("Action"))
+			frm.add_custom_button(__("Reject"), function () { 
+					if (frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager')) {
+						const d = new frappe.ui.Dialog({
+							title: 'Enter Rejection Remark',
+							fields: [
+								{
+									label: 'Rejection Remark',
+									fieldname: 'rejection_remark',
+									fieldtype: 'Small Text',
+									reqd: 1
+								}
+							],
+							primary_action_label: 'Submit',
+							primary_action(values) {
+								if (!values.rejection_remark) {
+									frappe.msgprint('Rejection Remark is required');
+									frappe.msgprint('Rejection Remark தேவையானது')
+									return;
+								}
+								frm.set_value('rejection_remark', values.rejection_remark);
+								
+								frm.set_value('status', 'Rejected by Finance');
+								frm.set_value('sent_for_finance', 0);
+								frm.set_value('rejected_by_finance', 1);
+								frm.save().then(() => {
+									console.log("Saved successfully");
+									location.reload();
+								});
+
+								d.hide(); 
+							}
+						});
+
+						d.show();
+
+					} else {
+						frappe.msgprint("Only Accounts Manager will be allowed to reject");
+						frappe.msgprint("Reject செய்யும் அதிகாரம் Accounts Manager-க்கு மட்டுமே உள்ளது.")
+					}
+				}, __("Action"));
+			}
+			
+			else if(frm.doc.approved_by_bmd ==0 && frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin' && (frappe.user.has_role('BMD') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("BMD Approval"), function () {
+					if(frappe.user.has_role('BMD') || frappe.user.has_role('System Manager')){
+						frm.set_value('status','Pending for CMD')
+						
+						frm.set_value('approved_by_bmd',1)
+						frm.set_value('approved_by_bmd_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('bmd',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only BMD will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் BMD -க்கு மட்டுமே உள்ளது.")
+
+					}
+						
+					},__("Action"))
+			}
+			else if(frm.doc.approved_by_cmd==0 && frm.doc.status=='Pending for CMD' && frm.doc.scope_of_delivery=='Wonjin' && (frappe.user.has_role('CMD') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("CMD Approval"), function () {
+					if(frappe.user.has_role('CMD') || frappe.user.has_role('System Manager')){
+						frm.set_value('status','LR Approved')						
+						frm.set_value('approved_by_cmd',1)
+						frm.set_value('approved_by_cmd_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('ffw_approved',1)
+						frm.set_value('cmd',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							if (frm.doc.po_so === "Sales Invoice" && frm.doc.order_no && frm.doc.cargo_type=='Sea') {
+								frappe.call({
+									method: "onegene.onegene.custom.update_workflow",
+									args: {
+										doctype: "Sales Invoice",
+										name: frm.doc.order_no,
+									},
+									
+									
+								});
+							} else {
+								location.reload(); 
+							}
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only CMD will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் CMD -க்கு மட்டுமே உள்ளது.")
+
+					}
+					
+					},__("Action"))
+			}
+			
+			else if(frm.doc.status=='Approved by HOD' && frm.doc.scope_of_delivery=='Customer'){
+						frm.set_value('ffw_approved',1)
+						frm.set_df_property('eta', 'read_only', 0);
+						frm.set_df_property('etd', 'read_only', 0);
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+			}
+			
+			frm.set_df_property('support_doc','hidden',1)
+			frm.set_df_property('custom_section_break_sloza','hidden',1)
+		}
+		else if (frm.doc.recommended_ffw && frm.doc.ffw_approved==1 && frm.doc.status!='Dispatched' && frm.doc.status!='In Transit' && frm.doc.status!='Delivered' && frm.doc.status!='Closed'){
+			frm.set_df_property('support_doc','hidden',0)
+			frm.set_df_property('custom_section_break_sloza','hidden',0)
+			frm.set_df_property('proof_of_delivery_section','hidden',1)
+			frm.set_df_property('section_break_kvnk','hidden',1)
+		}
+			
+		else if(frm.doc.status=='Dispatched'){
+			// console.log('hiiiiiii')
+			frm.set_df_property('proof_of_delivery_section','hidden',0)
+			frm.set_df_property('section_break_kvnk','hidden',0)
+		}
 		if (frm.doc.status == "Variation - Pending for Finance") {
-			if (frappe.user.has_role("Accounts User")) {
+			if (frappe.user.has_role("Accounts User") || frappe.user.has_role("System Manager")) {
 				frm.add_custom_button(__("Approve"), function () {
 					frappe.call({
 						method: "onegene.onegene.doctype.logistics_request.logistics_request.update_status",
@@ -170,45 +984,34 @@ frappe.ui.form.on('Logistics Request', {
 		}
 
 		if(!frm.doc.__islocal){
-			frm.add_custom_button(__("Packing List"), function () {
-			var f_name = frm.doc.name
-			var print_format = "Packing List Logistics";
-			window.open(frappe.urllib.get_full_url("/api/method/frappe.utils.print_format.download_pdf?"
-				+ "doctype=" + encodeURIComponent("Logistics Request")
-				+ "&name=" + encodeURIComponent(f_name)
-				+ "&trigger_print=1"
-				+ "&format=" + print_format
-				+ "&no_letterhead=0"
-			));
-		});
-			if (frm.doc.status == "Delivered" && frm.doc.status != "Closed") {
-				frm.add_custom_button(__('Close'), function() {
-				let d = new frappe.ui.Dialog({
-					title: 'Close Document',
-					fields: [
-						{
-							label: 'Remarks',
-							fieldname: 'closing_remarks',
-							reqd: 1,
-							fieldtype: 'Small Text',
-						},
-					],
-					primary_action_label: 'Close',
-					primary_action(values) {
-						frm.set_value('closing_remarks', values.closing_remarks);
-						frm.set_value('status', "Closed");
-						d.hide();
-						frm.save();
-					}
-				});
-
-				d.show();
-			});
+			if(frm.doc.recommended_ffw && frm.doc.owner == frappe.session.user){
+				frm.add_custom_button(__("FFW"), function() {
+				var f_name = frm.doc.name
+				var print_format = "FFW New";
+				window.open(frappe.urllib.get_full_url("/api/method/frappe.utils.print_format.download_pdf?" +
+					"doctype=" + encodeURIComponent("Logistics Request") +
+					"&name=" + encodeURIComponent(f_name) +
+					"&trigger_print=1" +
+					"&format=" + print_format +
+					"&no_letterhead=0"
+				));
+			},__('Print'));
 			}
-
+			// frm.add_custom_button(__("Packing List"), function () {
+			// 	var f_name = frm.doc.name
+			// 	var print_format = "Packing List Logistics";
+			// 	window.open(frappe.urllib.get_full_url("/api/method/frappe.utils.print_format.download_pdf?"
+			// 		+ "doctype=" + encodeURIComponent("Logistics Request")
+			// 		+ "&name=" + encodeURIComponent(f_name)
+			// 		+ "&trigger_print=1"
+			// 		+ "&format=" + print_format
+			// 		+ "&no_letterhead=0"
+			// 	));
+			// },__('Print'));
+			
 		
 		}
-		if (frm.doc.status != "Draft" && frm.doc.status != "Closed") {
+		if (frm.doc.status != "Draft" && frm.doc.status != "Approved by SMD" && frm.doc.status != "Closed" && frm.doc.owner == frappe.session.user) {
 			frm.add_custom_button(__('Revise ETD / ETA'), function() {
 		let d = new frappe.ui.Dialog({
 			title: 'ETD / ETA Revision',
@@ -267,11 +1070,13 @@ frappe.ui.form.on('Logistics Request', {
 					const dos = frm.doc.date_of_shipment;
 					if (dos && etd < dos) {
 						frappe.msgprint(__('ETD cannot be before Date of Shipment'));
+						frappe.msgprint(__('ETD, Date of Shipment-ஐவிட முன்னதாக இருக்க முடியாது'))
 						d.show();
 					}
 					else {
 						if (eta && etd > eta) {
 							frappe.msgprint(__('ETD cannot be after ETA'));
+							frappe.msgprint(__('ETD, ETA-ஐவிட பின்னதாக இருக்க முடியாது'))
 							d.show();
 						}
 						else{
@@ -301,6 +1106,8 @@ frappe.ui.form.on('Logistics Request', {
 					const etd = (frm.doc.etd);
 					if (etd && eta < etd) {
 						frappe.msgprint(__('ETA cannot be before ETD'));
+						frappe.msgprint(__('ETA, ETD-ஐவிட முன்னதாக இருக்க முடியாது'))
+
 						d.show();
 					}
 					else{
@@ -338,7 +1145,6 @@ frappe.ui.form.on('Logistics Request', {
 			// frm.set_df_property('section_break_28', 'hidden', 1);
 			// frm.set_df_property('documents_status_section', 'hidden', 1);
 			// frm.set_df_property('applicable_charges_section', 'hidden', 1);
-			// frm.set_df_property('section_break_49', 'hidden', 1);
 			// frm.set_df_property('section_break_62', 'hidden', 1);
 			// frm.set_df_property('support_doc', 'hidden', 1);
 
@@ -618,6 +1424,7 @@ frappe.ui.form.on('Logistics Request', {
 					{ 'title': 'Packing List' },
 					{ 'title': 'Fumigation Certificate (if needed)' },
 					{ 'title': 'E-way Bill / Transport Document' },
+					{ 'title': 'SCOMET Declaration' },
 					]
 					$.each(data, function (i, v) {
 						frm.add_child('document_attached', {
@@ -721,15 +1528,16 @@ frappe.ui.form.on('Logistics Request', {
 
             if (!quoted) {
                 frappe.throw(__('Recommended FFW not present in FFW Quotation table'));
+				frappe.throw(__('Recommended FFW, FFW Quotation table-ல் இல்லை'))
             }
 			if (frm.doc.quoted_currency === 'INR') {
-				if (flt(frm.doc.quoted_amount) !== flt(frm.doc.total_shipment_cost)) {
+				if (flt(frm.doc.quoted_amount) !== flt(frm.doc.total_shipment_cost) && flt(frm.doc.total_shipment_cost) > 0) {
 					if (!frm.doc.comments || !frm.doc.revised_quote) {
 						frappe.custom_modal();
 					}
 				}
 			} else {
-				if (flt(frm.doc.quoted_value_in_company_currency) !== flt(frm.doc.total_shipment_cost)) {
+				if (flt(frm.doc.quoted_value_in_company_currency) !== flt(frm.doc.total_shipment_cost) && flt(frm.doc.total_shipment_cost) > 0) {
 					if (!frm.doc.comments || !frm.doc.revised_quote) {
 						frappe.custom_modal();
 					}
@@ -790,33 +1598,399 @@ frappe.ui.form.on('Logistics Request', {
 		})
 		frm.refresh_field("ffw_quotation")
 	},
+
+	ffw_quotation : function(frm){
+
+		            frm.trigger('set_recommended_ffw_filter');
+
+
+	},
+
+
+
+	set_recommended_ffw_filter: function(frm) {
+        frm.set_query("recommended_ffw", function(doc) {
+            const ffw_names = [];
+            if (doc.ffw_quotation) {
+                doc.ffw_quotation.forEach(row => {
+                    if (row.ffw_name) {
+                        ffw_names.push(row.ffw_name);
+                    }
+                });
+            }
+            return {
+                filters: {
+                    'name': ['in', ffw_names]
+                }
+            };
+        });
+    },
+
+
+
+
+
+
+
+
+
+
 	
 	onload: function (frm) {
-		// const suppliers = frm.doc.ffw_quotation.map(row => row.ffw_name);
-		// console.log(suppliers)
-        // Set dynamic query for the recommended_ffw field
-		// if (frappe.user.has_role("Accounts User")) {
-		// 	const editable_fields = ['appointed_cha_name', 'clearance_status', 'boe_number', 'boe_date', 'duty_details', 'payment_challan_attachment', 'payment_date'];
 
-		// 	frm.fields_dict && Object.keys(frm.fields_dict).forEach(fieldname => {
-		// 		if (!editable_fields.includes(fieldname)) {
-		// 			frm.set_df_property(fieldname, 'read_only', 1);
-		// 		}
-		// 	});
-		// }
+		frm.trigger('set_recommended_ffw_filter');
+
+		
+		if(frm.doc.status=='Closed'){
+            frm.disable_form();
+        }
+		
+		if(frm.doc.status=='Draft'){
+			frm.set_df_property('section_break_kvnk','hidden',1)
+			frm.set_df_property('support_doc','hidden',1)
+			frm.set_df_property('custom_section_break_sloza','hidden',1)
+			frm.set_df_property('proof_of_delivery_section','hidden',1)
+		}
+		if(frm.doc.recommended_ffw && frm.doc.ffw_approved==0){
+			frm.set_df_property('support_doc','hidden',1)
+			frm.set_df_property('custom_section_break_sloza','hidden',1)
+			frm.set_df_property('section_break_kvnk','hidden',1)
+			frm.set_df_property('proof_of_delivery_section','hidden',1)
+			console.log(frm.doc.approved_by_hod)
+			
+
+			if(frm.doc.approved_by_cmd==0 && frm.doc.status=='Pending for CMD'&&frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin' && (frappe.user.has_role('CMD') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("CMD Approval"), function () {
+					if(frappe.user.has_role('CMD') || frappe.user.has_role('System Manager')){
+						frm.set_value('status','Pending for SMD')
+						
+						frm.set_value('approved_by_cmd',1)
+						frm.set_value('approved_by_cmd_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('cmd',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only CMD will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் CMD -க்கு மட்டுமே உள்ளது.")
+					}
+					
+					},__("Action"))
+			}
+			
+			else if((frm.doc.approved_by_hod==0 && (frm.doc.cargo_type=='Sea' || frm.doc.cargo_type=='Air') &&frm.doc.scope_of_delivery=='Customer')){
+				frm.add_custom_button(__("HOD Approval"), function () {
+					if(frappe.user.has_role('HOD') || frappe.user.has_role('System Manager')){
+						frm.set_value('status','Approved by HOD')
+						
+						frm.set_value('approved_by_hod',1)
+						frm.set_value('ffw_approved',1)
+						frm.set_df_property('section_break_kvnk','hidden',1)
+						frm.set_value('hod',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only HOD will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் HOD -க்கு மட்டுமே உள்ளது.")
+					}
+						
+					},__("Action"))
+			}
+			
+			else if(frm.doc.approved_by_smd==0 && frm.doc.status=='Pending for SMD'&&frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin' && (frappe.user.has_role('SMD') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("SMD Approval"), function () {
+					if(frappe.user.has_role('SMD') || frappe.user.has_role('System Manager')){
+						frm.set_value('status', 'LR Approved');
+						
+						frm.set_value('approved_by_smd',1)
+						frm.set_value('approved_by_smd_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('ffw_approved',1)
+						frm.set_value('smd',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							if (frm.doc.po_so === "Sales Invoice" && frm.doc.order_no && doc.cargo_type=='Air') {
+								frappe.call({
+									method: "onegene.onegene.custom.update_workflow",
+									args: {
+										doctype: "Sales Invoice",
+										name: frm.doc.order_no,
+									},
+									callback: function(r) {
+										if (!r.exc) {
+											frm.set_value("workflow_state", 'LR Approved');
+											frm.refresh_field("workflow_state");
+										}
+									}
+									
+								});
+							} else {
+								location.reload(); 
+							}
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only SMD will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் SMD -க்கு மட்டுமே உள்ளது.")
+					}
+					
+					},__("Action"))
+			}
+			else if (frm.doc.rejected_by_finance==1 && frm.doc.reopened== 0 ){
+				$.each(frm.fields_dict, function(fieldname, field) {
+                            frm.set_df_property(fieldname, 'read_only', 1);
+                        });
+				if ((frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager'))){
+					frm.add_custom_button(__("Re-Open"), function () { 
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						frm.set_value('reopened', 1);
+						frm.save().then(() => {
+							window.location.reload();
+						});
+					}
+						
+				});
+				}
+				
+				
+
+			}
+			else if (frm.doc.reopened==1 ){
+				frm.add_custom_button(__("Send to Finance"), function () {
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						
+						frm.set_value('status', 'Pending for Finance');
+						frm.set_value('sent_for_finance', 1);
+						frm.set_value('rejected_by_finance', 0);
+						frm.set_value('reopened', 0);
+						// frm.set_value("prepared_by",frappe.session.user);
+						// let now = frappe.datetime.now_datetime();  
+						// frm.set_value("prepared_by_time", now);
+
+						frm.save();
+					}
+
+					else{
+						frappe.msgprint("Only Logistics User will move it for approval.")
+						frappe.msgprint("Approval-க்கு போகும் செயலை Logistics User மட்டும் செய்ய முடியும்.")
+
+					}
+						
+					})
+			}
+			else if(frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin' && frm.doc.approved_by_finance==0 && frm.doc.sent_for_finance==0 && (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("Send to Finance"), function () {
+					if (frappe.user.has_role('Logistics User') || frappe.user.has_role('System Manager')) {
+						
+						frm.set_value('status', 'Pending for Finance');
+						frm.set_value('sent_for_finance', 1);
+						frm.set_value("prepared_by",frappe.session.user);
+						let now = frappe.datetime.now_datetime();  
+						frm.set_value("prepared_by_time", now);
+
+						
+
+						frm.save().then(() => {
+							console.log("Form saved successfully");
+
+							
+						});
+					}
+
+					else{
+						frappe.msgprint("Only Logistics User will move it for approval.")
+						frappe.msgprint("Approval-க்கு போகும் செயலை Logistics User மட்டும் செய்ய முடியும்.")
+
+					}
+						
+					},__("Action"))
+			}
+			else if(frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin' && frm.doc.approved_by_finance==0 && frm.doc.sent_for_finance==1 && (frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager'))){
+				frm.add_custom_button(__("Finance Approval"), function () {
+					if(frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager')){
+						
+						frm.set_value('status','Pending for BMD')
+						frm.set_value('approved_by_finance',1)
+						frm.set_value('approved_by_finance_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('finance',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only Accounts Manager will allow to approve")
+						frappe.msgprint("Approval-க்கு போகும் செயலை Accounts Manager மட்டும் செய்ய முடியும்.")
+					}
+						
+					},__("Action"))
+				frm.add_custom_button(__("Reject"), function () { 
+					if (frappe.user.has_role('Accounts Manager') || frappe.user.has_role('System Manager')) {
+						const d = new frappe.ui.Dialog({
+							title: 'Enter Rejection Remark',
+							fields: [
+								{
+									label: 'Rejection Remark',
+									fieldname: 'rejection_remark',
+									fieldtype: 'Small Text',
+									reqd: 1
+								}
+							],
+							primary_action_label: 'Submit',
+							primary_action(values) {
+								if (!values.rejection_remark) {
+									frappe.msgprint('Rejection Remark is required');
+									frappe.msgprint('Rejection Remark தேவையானது')
+									return;
+								}
+								frm.set_value('rejection_remark', values.rejection_remark);
+								
+								frm.set_value('status', 'Rejected by Finance');
+								frm.set_value('sent_for_finance', 0);
+								frm.set_value('rejected_by_finance', 1);
+								frm.save().then(() => {
+									console.log("Saved successfully");
+									location.reload();
+								});
+
+								d.hide(); 
+							}
+						});
+
+						d.show();
+
+					} else {
+						frappe.msgprint("Only Accounts Manager will be allowed to reject");
+						frappe.msgprint("Reject செய்யும் அதிகாரம் Accounts Manager-க்கு மட்டுமே உள்ளது.")
+					}
+				}, __("Action"));
+			}
+			
+			else if(frm.doc.approved_by_bmd ==0 && frm.doc.cargo_type=='Air'&&frm.doc.scope_of_delivery=='Wonjin' && (frappe.user.has_role('BMD') || frappe.user.has_role('System Manager'))){ 
+				frm.add_custom_button(__("BMD Approval"), function () {
+					if(frappe.user.has_role('BMD') || frappe.user.has_role('System Manager')){
+						
+						frm.set_value('status','Pending for CMD')
+						frm.set_value('approved_by_bmd',1)
+						frm.set_value('approved_by_bmd_date_and_time', frappe.datetime.now_datetime());
+						frm.set_value('bmd',frappe.session.user)
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+					}
+					else{
+						frappe.msgprint("Only BMD will allow to approve")
+						frappe.msgprint("Approve செய்யும் அதிகாரம் BMD -க்கு மட்டுமே உள்ளது.")
+					}
+						
+					},__("Action"))
+			}
+			
+			else if(frm.doc.status=='Approved by HOD' && frm.doc.scope_of_delivery=='Customer'){
+						frm.set_value('ffw_approved',1)
+
+						frm.save().then(() => {
+							console.log("Saved successfully");
+							location.reload();
+						});
+			}
+	
+			
+			if((frm.doc.approved_by_hod==1&& (frm.doc.cargo_type=='Sea' || frm.doc.cargo_type=='Air') &&frm.doc.scope_of_delivery=='Customer')){
+						frm.set_df_property('support_doc','hidden',0)
+						frm.set_df_property('custom_section_break_sloza','hidden',0)
+						frm.set_df_property('section_break_kvnk','hidden',0)
+			}else{
+				frm.set_df_property('support_doc','hidden',1)
+				frm.set_df_property('custom_section_break_sloza','hidden',1)
+			}
+		}
+		else if (frm.doc.recommended_ffw && frm.doc.ffw_approved==1 && frm.doc.status!='Dispatched' && frm.doc.status!='In Transit' && frm.doc.status!='Delivered' && frm.doc.status!='Closed'){
+			frm.set_df_property('support_doc','hidden',0)
+			frm.set_df_property('custom_section_break_sloza','hidden',0)
+			frm.set_df_property('proof_of_delivery_section','hidden',1)
+			frm.set_df_property('section_break_kvnk','hidden',1)
+		}
+			
+		else if(frm.doc.status=='Dispatched'){
+			frm.set_df_property('proof_of_delivery_section','hidden',0)
+			frm.set_df_property('section_break_kvnk','hidden',0)
+		}
+		if (frm.doc.order_no) {
+			frm.set_df_property("requester_name", 'read_only', 1);
+			frm.set_df_property("customer", 'read_only', 1);
+			frm.set_df_property("order_no", 'read_only', 1);
+			frm.set_df_property("inventory_destination", 'read_only', 1);
+		}
+		// const suppliers = frm.doc.ffw_quotation.map(row => row.ffw_name);
+        // Set dynamic query for the recommended_ffw field
+		if (frappe.user.has_role("Accounts User") && frappe.user.has_role("Logistics User")) {
+			const editable_fields = ['appointed_cha_name', 'clearance_status', 'boe_number', 'boe_date', 'duty_details', 'payment_challan_attachment', 'payment_date'];
+
+			frm.fields_dict && Object.keys(frm.fields_dict).forEach(fieldname => {
+				if (editable_fields.includes(fieldname)) {
+					frm.set_df_property(fieldname, 'read_only', 0);
+				}
+			});
+		}
+		else if (frappe.user.has_role("Accounts User") && !frappe.user.has_role("Logistics User")) {
+			const editable_fields = ['appointed_cha_name', 'clearance_status', 'boe_number', 'boe_date', 'duty_details', 'payment_challan_attachment', 'payment_date'];
+
+			frm.fields_dict && Object.keys(frm.fields_dict).forEach(fieldname => {
+				if (!editable_fields.includes(fieldname)) {
+					frm.set_df_property(fieldname, 'read_only', 1);
+				}
+				
+			});
+		}
+		else if (!frappe.user.has_role("Accounts User") && frappe.user.has_role("Logistics User")){
+			const editable_fields = ['appointed_cha_name', 'clearance_status', 'boe_number', 'boe_date', 'duty_details', 'payment_challan_attachment', 'payment_date'];
+
+			frm.fields_dict && Object.keys(frm.fields_dict).forEach(fieldname => {
+				if (editable_fields.includes(fieldname)) {
+					frm.set_df_property(fieldname, 'read_only', 1);
+				}
+			});
+		}
 		if (frm.doc.logistic_type) {
 			frm.set_df_property('logistic_type', 'read_only', 1);
 		}
 		else {
 			frm.set_df_property('logistic_type', 'read_only', 0);
 		}
-        frm.set_query("recommended_ffw", function() {
-            return {
-				filters: {
-					"ffw": 1
-				}
-			}
-        });
+
+		
+        // frm.set_query("recommended_ffw", function() {
+        //     const ffw_names = [];
+        //     if (doc.ffw_quotation) {
+        //         doc.ffw_quotation.forEach(row => {
+        //             if (row.ffw_name) {
+        //                 ffw_names.push(row.ffw_name);
+        //             }
+        //         });
+        //     }
+        //     return {
+        //         filters: {
+        //             'name': ['in', ffw_names]
+        //         }
+        //     };
+        // });
+
+
+
+		
+
+
+
+
+
+
 		if (frm.doc.__islocal) {
 			if (frm.doc.order_no) {
 				frappe.call({
@@ -866,7 +2040,6 @@ frappe.ui.form.on('Logistics Request', {
 			// frm.set_df_property('section_break_28', 'hidden', 1);
 			// frm.set_df_property('documents_status_section', 'hidden', 1);
 			// frm.set_df_property('applicable_charges_section', 'hidden', 1);
-			// frm.set_df_property('section_break_49', 'hidden', 1);
 			// frm.set_df_property('section_break_62', 'hidden', 1);
 			// frm.set_df_property('support_doc', 'hidden', 1);
 
@@ -924,7 +2097,7 @@ frappe.ui.form.on('Logistics Request', {
 			frm.set_df_property('box_pallet_count', 'read_only', 1);
 		}
 
-		if (frm.doc.workflow_state == "Pending for HOD" || frm.doc.workflow_state == "Pending for COO" || frm.doc.workflow_state == "Attach Supporting Document" || frm.doc.workflow_state == "E-Way Bill" || frm.doc.workflow_state == "Pending for Confirmation" || frm.doc.workflow_state == "Document Review" || frm.doc.workflow_state == "Payment & Customs Clearance" || frm.doc.workflow_state == "Delivery" || frm.doc.workflow_state == "Create Purchase Receipt") {
+		if ( frm.doc.workflow_state == "Pending for COO" || frm.doc.workflow_state == "Attach Supporting Document" || frm.doc.workflow_state == "E-Way Bill" || frm.doc.workflow_state == "Pending for Confirmation" || frm.doc.workflow_state == "Document Review" || frm.doc.workflow_state == "Payment & Customs Clearance" || frm.doc.workflow_state == "Delivery" || frm.doc.workflow_state == "Create Purchase Receipt") {
 
 			frm.set_df_property('wonjin_inco_terms', 'read_only', 1);
 			frm.set_df_property('supplier_inco_terms', 'read_only', 1);
@@ -1006,6 +2179,7 @@ frappe.ui.form.on('Logistics Request', {
 					{ 'title': 'Packing List' },
 					{ 'title': 'Fumigation Certificate (if needed)' },
 					{ 'title': 'E-way Bill / Transport Document' },
+					{ 'title': 'SCOMET Declaration' },
 					]
 					$.each(data, function (i, v) {
 						frm.add_child('document_attached', {
@@ -1191,11 +2365,29 @@ frappe.ui.form.on('Logistics Request', {
 		frm.trigger('transit_time')
 	},
 	transit_time(frm) {
+		if (frm.doc.etd && frm.doc.date_of_shipment){
+				if(frm.doc.etd<frm.doc.date_of_shipment){
+				frm.set_value('etd','')
+				frm.set_value('transit_time', '')
+				frappe.msgprint('ETD cannot be before Date of Shipment')
+				frappe.msgprint(__('ETD, Date of Shipment-ஐவிட முன்னதாக இருக்க முடியாது'))
+			}
+		}
+		if (frm.doc.eta && frm.doc.date_of_shipment){
+				if(frm.doc.eta<frm.doc.date_of_shipment){
+				frm.set_value('eta','')
+				frm.set_value('transit_time', '')
+				frappe.msgprint('ETA cannot be before Date of Shipment')
+				frappe.msgprint(__('ETA, Date of Shipment-ஐவிட முன்னதாக இருக்க முடியாது'))
+			}
+		}
 		if (frm.doc.eta && frm.doc.etd) {
+			
 			if(frm.doc.eta<frm.doc.etd){
 				frm.set_value('eta','')
 				frm.set_value('transit_time', '')
 				frappe.msgprint('ETA cannot be before ETD')
+				frappe.msgprint(__('ETA, ETD-ஐவிட முன்னதாக இருக்க முடியாது'))
 			}
 			else{
 				var transit_time = frappe.datetime.get_diff(frm.doc.eta, frm.doc.etd)
@@ -1321,6 +2513,21 @@ frappe.ui.form.on('FFW Quotation', {
 
 		frm.refresh_fields('ffw_quotation')
 	},
+	freight_charges(frm,cdt,cdn){
+		var child = locals[cdt][cdn]
+		child.total_shipment_cost=child.porthandling_charges+child.cha_charges+child.freight_charges
+		frm.refresh_fields('ffw_quotation')
+	},
+	porthandling_charges(frm,cdt,cdn){
+		var child = locals[cdt][cdn]
+		child.total_shipment_cost=child.porthandling_charges+child.cha_charges+child.freight_charges
+		frm.refresh_fields('ffw_quotation')
+	},
+	cha_charges(frm,cdt,cdn){
+		var child = locals[cdt][cdn]
+		child.total_shipment_cost=child.porthandling_charges+child.cha_charges+child.freight_charges
+		frm.refresh_fields('ffw_quotation')
+	},
 
 
 
@@ -1389,11 +2596,13 @@ frappe.custom_modal = function () {
 
 	if (!reason) {
 		frappe.msgprint('Reason is required.');
+		frappe.msgprint('Reason தேவையானது.')
 		return;
 	}
 
 	if (!fileInput.files.length) {
 		frappe.msgprint('Please select a file to attach.');
+		frappe.msgprint('தயவுசெய்து இணைக்க ஒரு file-ஐ தேர்ந்தெடுக்கவும்.')
 		return;
 	}
 
@@ -1403,7 +2612,7 @@ frappe.custom_modal = function () {
 	formData.append('doctype', cur_frm.doctype);
 	formData.append('docname', cur_frm.docname);
 	formData.append('fieldname', 'revised_quote');
-	formData.append('is_private', 0); // Set to 1 if you want it private
+	formData.append('is_private', 0);
 
 	$.ajax({
 		url: '/api/method/upload_file',
@@ -1420,15 +2629,19 @@ frappe.custom_modal = function () {
 				cur_frm.set_value('comments', reason);
 				cur_frm.set_value('status', "Variation - Pending for Finance");
 				frappe.msgprint('File uploaded successfully.');
+				frappe.msgprint('File வெற்றிகரமாக upload செய்யப்பட்டது.')
 				cur_frm.save()
 			} else {
 				frappe.msgprint('Upload succeeded, but no file URL returned.');
+				frappe.msgprint('Upload வெற்றிகரமாக முடிந்தது, ஆனால் எந்த file URL-ம் கிடைக்கவில்லை.')
+
 			}
 			$('.custom-gst-modal').modal('hide');
 		},
 		error: function (xhr) {
 			console.error(xhr.responseText);
 			frappe.msgprint('File upload failed.');
+			frappe.msgprint('File upload தோல்வியடைந்தது.')
 		}
 	});
 });

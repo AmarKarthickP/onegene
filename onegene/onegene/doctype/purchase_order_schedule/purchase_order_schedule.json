@@ -11,18 +11,25 @@
   "supplier_po_section",
   "supplier_name",
   "supplier_code",
+  "supplier_group",
   "schedule_date",
   "schedule_month",
   "column_break_eylx",
   "purchase_order_number",
+  "po_type",
   "order_type",
   "schedule_year",
+  "currency_section",
+  "currency",
+  "column_break_kfqz",
+  "exchange_rate",
   "section_break_uqjh",
   "item_code",
   "item_group",
-  "column_break_qstg",
   "item_name",
+  "column_break_qstg",
   "order_rate",
+  "order_rate_inr",
   "section_break_oyzr",
   "qty",
   "received_qty",
@@ -31,6 +38,10 @@
   "schedule_amount",
   "received_amount",
   "pending_amount",
+  "column_break_ngwb",
+  "schedule_amount_inr",
+  "received_amount_inr",
+  "pending_amount_inr",
   "revisions_section",
   "revision",
   "received",
@@ -47,7 +58,9 @@
   "column_break_dtfp",
   "column_break_kbvn",
   "column_break_rmly",
-  "child_name"
+  "child_name",
+  "summary_tab",
+  "schedule_summary"
  ],
  "fields": [
   {
@@ -63,13 +76,14 @@
    "label": "Supplier & PO Details"
   },
   {
-   "fetch_from": "purchase_order_number.supplier_code",
+   "fetch_from": "supplier_name.supplier_code",
    "fieldname": "supplier_code",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Supplier Code"
   },
   {
-   "fetch_from": "purchase_order_number.supplier",
+   "fetch_from": ".supplier",
    "fieldname": "supplier_name",
    "fieldtype": "Link",
    "in_standard_filter": 1,
@@ -95,7 +109,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Order Type",
+   "label": "Supplier Order Type",
    "options": "\nFixed\nOpen"
   },
   {
@@ -142,13 +156,16 @@
    "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Item Name"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "order_rate",
    "fieldtype": "Currency",
    "label": "Order Rate",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -169,16 +186,14 @@
    "default": "0",
    "fieldname": "received_qty",
    "fieldtype": "Float",
-   "label": "Received Qty",
-   "read_only": 1
+   "label": "Received Qty"
   },
   {
    "allow_on_submit": 1,
    "default": "0",
    "fieldname": "pending_qty",
    "fieldtype": "Float",
-   "label": "Pending Qty",
-   "read_only": 1
+   "label": "Pending Qty"
   },
   {
    "fieldname": "column_break_bibq",
@@ -190,6 +205,7 @@
    "fieldname": "schedule_amount",
    "fieldtype": "Currency",
    "label": "Schedule Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -198,6 +214,7 @@
    "fieldname": "received_amount",
    "fieldtype": "Currency",
    "label": "Received Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -206,6 +223,7 @@
    "fieldname": "pending_amount",
    "fieldtype": "Currency",
    "label": "Pending Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -320,12 +338,98 @@
    "fieldtype": "Date",
    "in_standard_filter": 1,
    "label": "Schedule Date"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "order_rate_inr",
+   "fieldtype": "Currency",
+   "label": "Order Rate (INR)",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "currency_section",
+   "fieldtype": "Section Break",
+   "label": "Currency"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "default": "1",
+   "fieldname": "exchange_rate",
+   "fieldtype": "Float",
+   "label": "Exchange Rate",
+   "precision": "9",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ngwb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "schedule_amount_inr",
+   "fieldtype": "Currency",
+   "label": "Schedule Amount (INR)",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "received_amount_inr",
+   "fieldtype": "Currency",
+   "label": "Received Amount (INR)",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "pending_amount_inr",
+   "fieldtype": "Currency",
+   "label": "Pending Amount (INR)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary_tab",
+   "fieldtype": "Tab Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "schedule_summary",
+   "fieldtype": "HTML",
+   "label": "Schedule Summary"
+  },
+  {
+   "fieldname": "column_break_kfqz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "supplier_name.supplier_group",
+   "fieldname": "supplier_group",
+   "fieldtype": "Link",
+   "label": "Supplier Group",
+   "options": "Supplier Group",
+   "read_only": 1
+  },
+  {
+   "fieldname": "po_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Order Type",
+   "options": "Purchase Order\nJob Order",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-23 11:36:56.674223",
+ "modified": "2025-11-06 10:53:34.636662",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Purchase Order Schedule",

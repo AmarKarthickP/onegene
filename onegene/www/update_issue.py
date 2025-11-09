@@ -22,7 +22,7 @@ def update_issue_from_teampro(**args):
 			issue_doc.status = 'Closed'
 		elif args['status']=='Hold':
 			issue_doc.status = 'On Hold'
-		if args['status']=='Client Review':
+		if args['status']=='Pending Review':
 			issue_doc.resolution_details = args['pr_remarks']
 			issue_doc.custom_proof = 'https://erp.teamproit.com/'+args['proof'] 
 		issue_doc.custom_task_allocated_to = args['allocated_to']
@@ -56,7 +56,7 @@ def update_issue_from_teampro(**args):
 			issue_doc.status = 'Closed'
 		elif args['status']=='Hold':
 			issue_doc.status = 'On Hold'
-		if args['status']=='Client Review':
+		if args['status']=='Pending Review':
 			issue_doc.resolution_details = args['pr_remarks']
 			issue_doc.custom_proof = 'https://erp.teamproit.com/'+args['proof']
 		issue_doc.custom_task_allocated_to = args['allocated_to']
@@ -83,7 +83,7 @@ def update_issue_from_teampro(**args):
 			issue_doc.status = 'Closed'
 		elif args['status']=='Hold':
 			issue_doc.status = 'On Hold'
-		if args['status']=='Client Review':
+		if args['status']=='Pending Review':
 			issue_doc.resolution_details = args['pr_remarks']
 			issue_doc.custom_proof = 'https://erp.teamproit.com/'+args['proof']
 		issue_doc.custom_task_allocated_to = args['allocated_to']

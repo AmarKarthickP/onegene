@@ -97,10 +97,11 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 		if parent_doctype == "Sales Order" and flt(new_data.get("qty")) < flt(child_item.delivered_qty):
 			frappe.throw(_("Cannot set quantity less than delivered quantity"))
 
-		if parent_doctype == "Purchase Order" and flt(new_data.get("qty")) < flt(
-			child_item.received_qty
-		):
-			frappe.throw(_("Cannot set quantity less than received quantity"))
+		# if parent_doctype == "Purchase Order" and flt(new_data.get("qty")) < flt(
+		# 	child_item.received_qty
+		# ):
+			
+		# 	frappe.throw(_("Cannot set quantity less than received quantity"))
 
 	def should_update_supplied_items(doc) -> bool:
 		"""Subcontracted PO can allow following changes *after submit*:
@@ -153,8 +154,8 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 	parent = frappe.get_doc(parent_doctype, parent_doctype_name)
 
 	check_doc_permissions(parent, "write")
-	_removed_items = validate_and_delete_children(parent, data)
-	items_added_or_removed |= _removed_items
+	# _removed_items = validate_and_delete_children(parent, data)
+	# items_added_or_removed |= _removed_items
 
 	for d in data:
 		new_child_flag = False

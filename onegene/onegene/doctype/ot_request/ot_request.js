@@ -12,8 +12,16 @@ frappe.ui.form.on("OT Request", {
             }
             }
         }
+        if(frm.doc.department){
+            get_ot_table(frm)
+        }
+        
+        
         
     },
+    // department(frm){
+        
+    // },
 	refresh(frm){
         frm.set_query("employee_category", function (){
             return {
@@ -102,7 +110,9 @@ frappe.ui.form.on("OT Request", {
         frm.trigger("department")
     },
     department(frm){
+        
         if(frm.doc.department){
+            get_ot_table(frm)
             frm.clear_table("employee_details");
             frappe.call({
                 method: "onegene.onegene.doctype.ot_request.ot_request.get_employees",
@@ -232,20 +242,101 @@ frappe.ui.form.on('OT Request Child', {
         
     },
     requested_ot_hours: function(frm, cdt, cdn) {
-        const child = locals[cdt][cdn]; 
-        if (child.requested_ot_hours){     
+        const child = locals[cdt][cdn];
+
+        if (!child.requested_ot_hours) return;
         if (child.requested_ot_hours < 2) {
-            frappe.model.set_value(cdt,cdn,'requested_ot_hours','');
+            frappe.model.set_value(cdt, cdn, 'requested_ot_hours', '');
             frappe.throw("Minimum time allowed for request is 2 hours. Below 2 are not applicable.");
         }
         var regex = /^[0-9]+$/;
-		if (!regex.test(child.requested_ot_hours) === true) {
-		    console.log(regex)
-            frappe.model.set_value(cdt,cdn,'requested_ot_hours','');
-			frappe.throw(__("Only Interger Values are allowed"));
-			
-		}
+        if (!regex.test(child.requested_ot_hours)) {
+            frappe.model.set_value(cdt, cdn, 'requested_ot_hours', '');
+            frappe.throw(__("Only Integer Values are allowed"));
+        }
+
+        check_ot_limit(frm, cdt, cdn);
+    },
+
+    shift: function(frm, cdt, cdn) {
+        check_ot_limit(frm, cdt, cdn);
     }
-    }
+    
 });
 
+function check_ot_limit(frm, cdt, cdn) {
+    const child = locals[cdt][cdn];
+
+    if (!child.shift || !child.requested_ot_hours || !frm.doc.department || !frm.doc.ot_requested_date) {
+        return;
+    }
+
+    frappe.call({
+        method: "frappe.client.get",
+        args: {
+            doctype: "Department",
+            name: frm.doc.department
+        },
+        callback: function(r) {
+            let allowed_ot = 0;
+            if (r.message) {
+                const department_doc = r.message;
+                const matching_shift_row = (department_doc.custom_ot_details || []).find(row => row.shift === child.shift);
+
+                if (matching_shift_row) {
+                    allowed_ot = matching_shift_row.allowed_ot || 0;
+                }
+            }
+
+            frappe.call({
+                method: "onegene.onegene.doctype.ot_request.ot_request.get_total_requested_ot",
+                args: {
+                    department: frm.doc.department,
+                    ot_date: frm.doc.ot_requested_date,
+                    shift: child.shift,
+                    exclude_doc: frm.doc.name
+                },
+                callback: function(res) {
+                    let current_doc_total = 0;
+
+                    (frm.doc.employee_details || []).forEach(row => {
+                        if (
+                            row.shift === child.shift &&
+                            row.requested_ot_hours
+                        ) {
+                            current_doc_total += Number(row.requested_ot_hours) || 0;
+                        }
+                    });
+
+                    let existing_ot = res.message || 0;
+                    let total_ot = Number(existing_ot) + current_doc_total;
+
+                    if (total_ot > allowed_ot) {
+                        frappe.msgprint({
+                            title: "OT Limit Exceeded",
+                            message: `For department ${frm.doc.department}, allowed limit is ${allowed_ot} hours for shift ${child.shift}. Currently requested: ${total_ot} hours.`,
+                            indicator: "red"
+                        });
+                        frappe.model.set_value(cdt, cdn, "requested_ot_hours", "");
+                        frm.refresh_field("employee_details");
+                    }
+                }
+            });
+        }
+    });
+}
+
+
+function get_ot_table(frm) {
+    frappe.call({
+        method: "onegene.onegene.doctype.ot_request.ot_request.make_ot_table",
+        args: {
+            department: frm.doc.department,
+        },
+        callback: function(r) {
+            if (r.message) {
+                frm.fields_dict.ot_table.$wrapper.empty().append(r.message);
+            } 
+        }
+    });
+}

@@ -14,9 +14,15 @@ frappe.ui.form.on("Bulk Compensation Off Option", {
 			if (frm.doc.compensation_off_date != ''){
 				frm.add_custom_button(__("Mark Compensation"),
 				function() {
-				frm.call('mark_compoff').then((r)=>{
+				frm.call({
+					method: "mark_compoff",
+					doc: frm.doc,
+					freeze: true,
+					freeze_message: __("Marking Compensation, please wait...")
+				}).then((r)=>{
 						if(r.message == "OK"){
 							frm.set_value('compensation_marked', 1)
+							frm.save()
 							frappe.msgprint("Successfully Marked Compensation")
 						}
 					})
@@ -30,19 +36,25 @@ frappe.ui.form.on("Bulk Compensation Off Option", {
 			frappe.validated = false;
 		}
 		else{
-			frm.call('get_employees').then((r)=>{
-				frm.clear_table('employees_list')
-				var c = 0
-				$.each(r.message,function(i,v){
-					c = c+1
-					frm.add_child('employees_list',{
-						'employee':v.employee,
-						'attendance':v.attendance
-					})
-				})
-				frm.refresh_field('employees_list')
-				frm.set_value('number_of_employees',c)
-			})
+			frappe.call({
+				method: 'get_employees',
+				doc: frm.doc,
+				freeze: true,
+				freeze_message: __("Fetching Employees, please wait..."),
+			}).then((r) => {
+				frm.clear_table('employees_list');
+				let c = 0;
+				$.each(r.message, function(i, v){
+					c++;
+					frm.add_child('employees_list', {
+						'employee': v.employee,
+						'attendance': v.attendance
+					});
+				});
+				frm.refresh_field('employees_list');
+				frm.set_value('number_of_employees', c);
+				frm.save()
+			});
 		}
 	},
 });

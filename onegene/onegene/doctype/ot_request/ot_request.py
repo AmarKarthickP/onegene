@@ -9,6 +9,7 @@ from frappe.utils import today,get_first_day, get_last_day, add_days
 
 class OTRequest(Document):
     # Update the OT hours in attendance and OT hours in OT Balance
+
     def on_submit(self):    
         if self.workflow_state=='Approved':
             for i in self.employee_details:
@@ -52,6 +53,15 @@ class OTRequest(Document):
                             otb.save(ignore_permissions=True)
                         frappe.db.set_value('Attendance',name,'custom_ot_balance_updated',True)
                         frappe.db.set_value('OT Request',self.name,'ot_balance',True)
+
+    def on_trash(self):
+        if "System Manager" not in frappe.get_roles(frappe.session.user):
+            if self.workflow_state and self.workflow_state not in ["Draft", "Cancelled"]:
+                if self.docstatus == 0:
+                    frappe.throw(
+                        "Cannot delete this document as the workflow has moved to the next level.",
+                        title="Not Permitted"
+                    )
 
 # Return Employees based on the Department selected
 @frappe.whitelist()
@@ -105,3 +115,76 @@ def get_details(name,dep=None):
             emp = frappe.db.get_value("Employee", {'name': name}, ['employee_name', 'designation'])
             return emp  
     
+@frappe.whitelist()
+def get_total_requested_ot(department, ot_date, shift, exclude_doc=None):
+    total = 0
+    filters = {
+        "department": department,
+        "ot_requested_date": ot_date,
+        "docstatus": ["!=", 2]  
+    }
+    if exclude_doc:
+        filters["name"] = ["!=", exclude_doc]
+    ot_requests = frappe.get_all("OT Request", filters=filters, fields=["name"])
+
+    for ot in ot_requests:
+        child_rows = frappe.get_all("OT Request Child", 
+            filters={"parent": ot.name, "shift": shift},
+            fields=["requested_ot_hours"]
+        )
+        total += sum([int(row.requested_ot_hours) for row in child_rows if row.requested_ot_hours])
+
+
+    return total
+
+
+@frappe.whitelist()
+def make_ot_table(department):
+    dept = frappe.get_doc('Department', department)
+    orange_color = '#f57c00'
+    data = f'''
+        <div style="text-align: center;">
+            <table class="table table-bordered" style="border-collapse: collapse; width: 60%; margin: auto;">
+                <tr>
+                    <td colspan="3" style="text-align: center; font-weight: bold; border: 1px solid black;">Allowed OT for {department}</td>
+                </tr>
+                <tr style="background-color:{orange_color}; color:white;">
+                    <td style="padding:0px; border: 1px solid black; width: 10%;"><b>Sr No</b></td>
+                    <td style="padding:0px; border: 1px solid black; width: 45%;"><b>Shift</b></td>
+                    <td style="padding:0px; border: 1px solid black; width: 45%;"><b>Allowed Hours</b></td>
+                </tr>
+    '''
+    sr_no = 1
+    if dept.custom_ot_details:
+        for d in dept.custom_ot_details:
+            data += f'''
+                <tr>
+                    <td style="padding:0px; border: 1px solid black; width: 10%;">{sr_no}</td>
+                    <td style="padding:0px; border: 1px solid black; width: 45%;">{d.shift}</td>
+                    <td style="padding:0px; border: 1px solid black; width: 45%;">{int(d.allowed_ot)}</td>
+                </tr>
+            '''
+            sr_no += 1
+    else:
+        shift_list = frappe.get_all("Shift Type",{"custom_disabled": 0},["name"])
+        if shift_list:
+            for shift in shift_list:
+                data += f'''
+                    <tr>
+                        <td style="padding:0px; border: 1px solid black; width: 10%;">{sr_no}</td>
+                        <td style="padding:0px; border: 1px solid black; width: 45%;">{shift.name}</td>
+                        <td style="padding:0px; border: 1px solid black; width: 45%;">0</td>
+                    </tr>
+                '''
+                sr_no += 1
+        else:
+            data += '''
+                <tr>
+                    <td colspan="3" style="text-align: center; border: 1px solid black;">No shift data available.</td>
+                </tr>
+            '''
+    data += '''
+            </table>
+        </div>
+    '''
+    return data

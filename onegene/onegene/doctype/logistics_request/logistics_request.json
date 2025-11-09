@@ -20,9 +20,11 @@
   "file_number",
   "custom_file_number",
   "requester_name",
+  "scope_of_delivery",
   "column_break_4",
   "status",
   "cargo_type",
+  "airline_remarks",
   "supplier",
   "credit_days",
   "inventory_destination",
@@ -30,6 +32,7 @@
   "customer",
   "tentative_production_completion",
   "alert_date",
+  "gate_entry_completed",
   "currency_and_price_list_section",
   "currency",
   "conv_rate",
@@ -50,77 +53,6 @@
   "column_break_17",
   "currency_inr",
   "custom_duty",
-  "quantity__packages",
-  "courier__awb__bl_number__container",
-  "dimensions",
-  "gross_wt",
-  "cbm",
-  "box_summary",
-  "uom",
-  "column_break_24",
-  "box_pallet_count",
-  "net_wt",
-  "seacontainertype",
-  "section_break_nqsu",
-  "box_summary_table",
-  "pallet_summary",
-  "attach_documents_section",
-  "document_attached",
-  "draft_invoice",
-  "packing_list_2",
-  "payment_ttc",
-  "section_break_28",
-  "date_of_shipment",
-  "wonjin_incoterms",
-  "pol_seaport",
-  "pol_city_seaport",
-  "pol_country_seaport",
-  "pol_airport",
-  "pol_city_airport",
-  "pol_country_airport",
-  "etd",
-  "transit_time",
-  "master_bl_number__awb",
-  "carrier_name",
-  "column_break_42",
-  "shipping_line",
-  "supplier_incoterms",
-  "customer_incoterms",
-  "pod_seaport",
-  "pod_city_seaport",
-  "pod_country_seaport",
-  "pod_airport",
-  "pod_city_airport",
-  "pod_country_airport",
-  "eta",
-  "document_dispatch_list",
-  "normal_bl_number__awb",
-  "eta_revision_log_section",
-  "remarks",
-  "section_break_49",
-  "ffw_quotation",
-  "section_break_gpxd",
-  "recommended_ffw",
-  "freight_charges",
-  "cha_charges",
-  "comments",
-  "revised_quote",
-  "column_break_dqyr",
-  "handling_charges",
-  "insurance",
-  "total_shipment_cost",
-  "quoted_value_in_company_currency",
-  "quoted_currency",
-  "quoted_amount",
-  "section_break_kvnk",
-  "appointed_cha_name",
-  "boe_number",
-  "duty_details",
-  "column_break_hwuw",
-  "clearance_status",
-  "boe_date",
-  "payment_challan_attachment",
-  "payment_date",
   "documents_status_section",
   "received_by",
   "dispatched_by",
@@ -149,9 +81,6 @@
   "cha",
   "reached_port",
   "custom_payment",
-  "support_doc",
-  "support_documents",
-  "download",
   "document_for_payment_clearance_section",
   "payment_clearance",
   "section_break_59",
@@ -175,12 +104,124 @@
   "bills",
   "mode_of_dispatch",
   "amended_from",
+  "quantity__packages_tab",
+  "quantity__packages",
+  "courier__awb__bl_number__container",
+  "dimensions",
+  "gross_wt",
+  "cbm",
+  "box_summary",
+  "uom",
+  "column_break_24",
+  "box_pallet_count",
+  "net_wt",
+  "seacontainertype",
+  "section_break_nqsu",
+  "box_summary_table",
+  "pallet_summary",
+  "logistics_ops_tab",
+  "logistics_ops_section",
+  "date_of_shipment",
+  "wonjin_incoterms",
+  "column_break_vqay",
+  "shipping_line",
+  "supplier_incoterms",
+  "customer_incoterms",
+  "section_break_28",
+  "pol_seaport",
+  "pol_city_seaport",
+  "pol_country_seaport",
+  "pol_airport",
+  "pol_city_airport",
+  "pol_country_airport",
+  "etd",
+  "transit_time",
+  "master_bl_number__awb",
+  "carrier_name",
+  "column_break_42",
+  "pod_seaport",
+  "pod_city_seaport",
+  "pod_country_seaport",
+  "pod_airport",
+  "pod_city_airport",
+  "pod_country_airport",
+  "final_destination",
+  "eta",
+  "document_dispatch_list",
+  "normal_bl_number__awb",
+  "eta_revision_log_section",
+  "remarks",
+  "frieght_forwarders_tab",
+  "section_break_49",
+  "ffw_quotation",
+  "section_break_gpxd",
+  "recommended_ffw",
+  "cmd_comment",
+  "prepared_by",
+  "finance",
+  "bmd",
+  "cmd",
+  "smd",
+  "hod",
+  "reopened",
+  "ffw_approved",
+  "sent_for_finance",
+  "rejected_by_finance",
+  "approved_by_finance",
+  "approved_by_bmd",
+  "approved_by_cmd",
+  "approved_by_smd",
+  "approved_by_hod",
+  "freight_charges",
+  "cha_charges",
+  "comments",
+  "column_break_dqyr",
+  "handling_charges",
+  "insurance",
+  "total_shipment_cost",
+  "quoted_value_in_company_currency",
+  "quoted_currency",
+  "quoted_amount",
+  "rejection_remark",
+  "revised_quote",
+  "approved_by_finance_date_and_time",
+  "prepared_by_time",
+  "approved_by_bmd_date_and_time",
+  "approved_by_cmd_date_and_time",
+  "approved_by_smd_date_and_time",
+  "approved_by_hod_date_and_time",
+  "attach_documents_tab",
+  "attach_documents_section",
+  "document_attached",
+  "draft_invoice",
+  "packing_list_2",
+  "payment_ttc",
+  "cha_clearance_tab",
+  "support_doc",
+  "support_documents",
+  "download",
+  "section_break_kvnk",
+  "appointed_cha_name",
+  "boe_number",
+  "duty_details",
+  "column_break_hwuw",
+  "clearance_status",
+  "boe_date",
+  "payment_challan_attachment",
+  "payment_date",
+  "proof_of_delivery_tab",
   "proof_of_delivery_section",
+  "proof_of_delivery_column",
   "attachment",
   "date_of_delivery",
   "receive_by_name",
+  "closing_remarks",
   "column_break_qddi",
-  "closing_remarks"
+  "invoice_attachment",
+  "date_of_invoice",
+  "ffw_final",
+  "invoice_value",
+  "closing_mail_sent"
  ],
  "fields": [
   {
@@ -282,9 +323,10 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_standard_filter": 1,
    "label": "Shipment Status",
    "no_copy": 1,
-   "options": "Draft\nScheduled\nVariation - Pending for Finance\nDispatched\nIn Transit\nDelivered\nClosed",
+   "options": "Draft\nPending for Finance\nApproved by Finance\nRejected by Finance\nApproved by BMD\nApproved by CMD\nApproved by SMD\nApproved by HOD\nPending for CMD\nPending for SMD\nPending for BMD\nInvoice Submitted\nLR Approved\nReady to Ship\nScheduled\nVariation - Pending for Finance\nDispatched\nIn Transit\nDelivered\nClosed",
    "read_only": 1
   },
   {
@@ -460,7 +502,6 @@
    "options": "Company:company:default_currency"
   },
   {
-   "collapsible": 1,
    "fieldname": "quantity__packages",
    "fieldtype": "Section Break",
    "label": "Quantity / Packages"
@@ -527,7 +568,6 @@
    "options": "\nLCL\n20Ft.Container\n40Ft.Container\n40(HC)"
   },
   {
-   "collapsible": 1,
    "fieldname": "section_break_nqsu",
    "fieldtype": "Section Break",
    "label": "Summary of Box & Pallet"
@@ -548,7 +588,6 @@
    "width": "100"
   },
   {
-   "collapsible": 1,
    "fieldname": "attach_documents_section",
    "fieldtype": "Section Break",
    "label": "Attach Documents"
@@ -556,6 +595,7 @@
   {
    "fieldname": "document_attached",
    "fieldtype": "Table",
+   "mandatory_depends_on": "eval:!(doc.__islocal)",
    "options": "Attach Documents"
   },
   {
@@ -579,25 +619,27 @@
   },
   {
    "fieldname": "section_break_28",
-   "fieldtype": "Section Break",
-   "label": "Logistics OPS"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "date_of_shipment",
    "fieldtype": "Date",
-   "label": "Date of Shipment"
+   "label": "Date of Shipment",
+   "mandatory_depends_on": "eval:!(doc.__islocal)"
   },
   {
    "fieldname": "wonjin_incoterms",
    "fieldtype": "Link",
    "label": "Wonjin INCOTERMS",
-   "options": "Incoterm"
+   "options": "Incoterm",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.cargo_type == \"Sea\"",
    "fieldname": "pol_seaport",
    "fieldtype": "Link",
    "label": "POL SEAPORT",
+   "mandatory_depends_on": "eval:doc.cargo_type == \"Sea\"",
    "options": "PORT"
   },
   {
@@ -605,14 +647,16 @@
    "fetch_from": "pol_seaport.city",
    "fieldname": "pol_city_seaport",
    "fieldtype": "Data",
-   "label": "POL City"
+   "label": "POL City",
+   "mandatory_depends_on": "eval:doc.cargo_type == \"Sea\""
   },
   {
    "depends_on": "eval:doc.cargo_type == \"Sea\"",
    "fetch_from": "pol_seaport.country",
    "fieldname": "pol_country_seaport",
    "fieldtype": "Data",
-   "label": "POL Country"
+   "label": "POL Country",
+   "mandatory_depends_on": "eval:doc.cargo_type == \"Sea\""
   },
   {
    "depends_on": "eval:doc.cargo_type == 'Air'",
@@ -620,6 +664,7 @@
    "fieldname": "pol_airport",
    "fieldtype": "Link",
    "label": "POL AIRPORT",
+   "mandatory_depends_on": "eval:doc.cargo_type == 'Air'",
    "options": "PORT"
   },
   {
@@ -627,25 +672,29 @@
    "fetch_from": "pol_airport.city",
    "fieldname": "pol_city_airport",
    "fieldtype": "Data",
-   "label": "POL City"
+   "label": "POL City",
+   "mandatory_depends_on": "eval:doc.cargo_type == 'Air'"
   },
   {
    "depends_on": "eval:doc.cargo_type == 'Air'",
    "fetch_from": "pol_airport.country",
    "fieldname": "pol_country_airport",
    "fieldtype": "Data",
-   "label": "POL Country"
+   "label": "POL Country",
+   "mandatory_depends_on": "eval:doc.cargo_type == 'Air'"
   },
   {
    "fieldname": "etd",
    "fieldtype": "Date",
    "label": "ETD ",
-   "read_only_depends_on": "eval:doc.status != \"Draft\" || (frappe.user.has_role == \"Accounts User\" && !frappe.user.has_role(\"System Manager\"))"
+   "mandatory_depends_on": "eval:!(doc.__islocal)",
+   "read_only_depends_on": "eval:(doc.status != \"Draft\" && doc.status != \"SMD Approved\" && doc.status!='Scheduled') || frappe.user.has_role == \"Accounts User\""
   },
   {
    "fieldname": "transit_time",
    "fieldtype": "Int",
-   "label": "Transit Time"
+   "label": "Transit Time",
+   "mandatory_depends_on": "eval:!(doc.__islocal)"
   },
   {
    "fieldname": "master_bl_number__awb",
@@ -664,15 +713,16 @@
   },
   {
    "fieldname": "shipping_line",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Shipping Line",
-   "options": "Shipping Line"
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.po_so=='Purchase Order'",
    "fieldname": "supplier_incoterms",
    "fieldtype": "Link",
    "label": "Supplier INCOTERMS",
+   "mandatory_depends_on": "eval:doc.po_so=='Purchase Order'",
    "options": "Incoterm"
   },
   {
@@ -680,6 +730,7 @@
    "fieldname": "customer_incoterms",
    "fieldtype": "Link",
    "label": "Customer INCOTERMS",
+   "mandatory_depends_on": "eval:doc.po_so=='Sales Invoice'",
    "options": "Incoterm"
   },
   {
@@ -687,6 +738,7 @@
    "fieldname": "pod_seaport",
    "fieldtype": "Link",
    "label": "POD SEAPORT",
+   "mandatory_depends_on": "eval:doc.cargo_type == \"Sea\"",
    "options": "PORT"
   },
   {
@@ -694,20 +746,23 @@
    "fetch_from": "pod_seaport.city",
    "fieldname": "pod_city_seaport",
    "fieldtype": "Data",
-   "label": "POD City"
+   "label": "POD City",
+   "mandatory_depends_on": "eval:doc.cargo_type == \"Sea\""
   },
   {
    "depends_on": "eval:doc.cargo_type == \"Sea\"",
    "fetch_from": "pod_seaport.country",
    "fieldname": "pod_country_seaport",
    "fieldtype": "Data",
-   "label": "POD Country"
+   "label": "POD Country",
+   "mandatory_depends_on": "eval:doc.cargo_type == \"Sea\""
   },
   {
    "depends_on": "eval:doc.cargo_type == 'Air'",
    "fieldname": "pod_airport",
    "fieldtype": "Link",
    "label": "POD AIRPORT",
+   "mandatory_depends_on": "eval:doc.cargo_type == 'Air'",
    "options": "PORT"
   },
   {
@@ -715,20 +770,23 @@
    "fetch_from": "pod_airport.city",
    "fieldname": "pod_city_airport",
    "fieldtype": "Data",
-   "label": "POD City"
+   "label": "POD City",
+   "mandatory_depends_on": "eval:doc.cargo_type == 'Air'"
   },
   {
    "depends_on": "eval:doc.cargo_type == 'Air'",
    "fetch_from": "pod_airport.country",
    "fieldname": "pod_country_airport",
    "fieldtype": "Data",
-   "label": "POD Country"
+   "label": "POD Country",
+   "mandatory_depends_on": "eval:doc.cargo_type == 'Air'"
   },
   {
    "fieldname": "eta",
    "fieldtype": "Date",
    "label": "ETA",
-   "read_only_depends_on": "eval:doc.status != \"Draft\" || (frappe.user.has_role == \"Accounts User\" && !frappe.user.has_role(\"System Manager\"))"
+   "mandatory_depends_on": "eval:!(doc.__islocal)",
+   "read_only_depends_on": "eval:(doc.status != \"Draft\" && doc.status != \"SMD Approved\" && doc.status!='Scheduled') || frappe.user.has_role == \"Accounts User\""
   },
   {
    "fieldname": "document_dispatch_list",
@@ -789,7 +847,8 @@
    "fieldname": "comments",
    "fieldtype": "Small Text",
    "label": "Comments",
-   "no_copy": 1
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "fieldname": "column_break_dqyr",
@@ -814,12 +873,15 @@
   {
    "fieldname": "quoted_value_in_company_currency",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Quoted Value (INR)",
    "read_only": 1
   },
   {
+   "default": "INR",
    "fieldname": "quoted_currency",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Quoted Currency",
    "options": "Currency",
    "read_only": 1
@@ -1185,8 +1247,7 @@
   },
   {
    "fieldname": "proof_of_delivery_section",
-   "fieldtype": "Section Break",
-   "label": "Proof of Delivery"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "attachment",
@@ -1201,23 +1262,308 @@
   {
    "fieldname": "receive_by_name",
    "fieldtype": "Data",
-   "label": "Receive by Name"
+   "label": "Received by Name"
   },
   {
+   "depends_on": "eval: doc.attachment && doc.date_of_delivery && doc.receive_by_name",
    "fieldname": "column_break_qddi",
-   "fieldtype": "Column Break",
-   "read_only": 1
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "closing_remarks",
    "fieldtype": "Small Text",
    "label": "Closing Remarks",
    "read_only": 1
+  },
+  {
+   "fieldname": "quantity__packages_tab",
+   "fieldtype": "Tab Break",
+   "label": "Quantity / Packages"
+  },
+  {
+   "fieldname": "attach_documents_tab",
+   "fieldtype": "Tab Break",
+   "label": "Attach Documents"
+  },
+  {
+   "fieldname": "logistics_ops_tab",
+   "fieldtype": "Tab Break",
+   "label": "Logistics OPS"
+  },
+  {
+   "fieldname": "frieght_forwarders_tab",
+   "fieldtype": "Tab Break",
+   "label": "Frieght & Forwarder"
+  },
+  {
+   "fieldname": "cha_clearance_tab",
+   "fieldtype": "Tab Break",
+   "label": "CHA & Clearance"
+  },
+  {
+   "fieldname": "proof_of_delivery_tab",
+   "fieldtype": "Tab Break",
+   "label": "Proof of Delivery"
+  },
+  {
+   "depends_on": "eval: doc.attachment && doc.date_of_delivery && doc.receive_by_name",
+   "fieldname": "invoice_attachment",
+   "fieldtype": "Attach",
+   "label": "Invoice Attachment"
+  },
+  {
+   "depends_on": "eval: doc.attachment && doc.date_of_delivery && doc.receive_by_name",
+   "fieldname": "date_of_invoice",
+   "fieldtype": "Date",
+   "label": "Date of Invoice"
+  },
+  {
+   "depends_on": "eval: doc.attachment && doc.date_of_delivery && doc.receive_by_name",
+   "fieldname": "ffw_final",
+   "fieldtype": "Data",
+   "label": "FFW",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.attachment && doc.date_of_delivery && doc.receive_by_name",
+   "fieldname": "invoice_value",
+   "fieldtype": "Currency",
+   "label": "Invoice Value",
+   "precision": "2"
+  },
+  {
+   "fieldname": "proof_of_delivery_column",
+   "fieldtype": "Column Break",
+   "label": "Proof of Delivery"
+  },
+  {
+   "fieldname": "cmd_comment",
+   "fieldtype": "Small Text",
+   "label": "CMD Comment",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "ffw_approved",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "FFW Approved",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cmd",
+   "fieldtype": "Link",
+   "label": "CMD",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scope_of_delivery",
+   "fieldtype": "Data",
+   "label": "Scope of Delivery",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.cargo_type == \"Air\"",
+   "fieldname": "airline_remarks",
+   "fieldtype": "Small Text",
+   "label": "Airline Remarks",
+   "mandatory_depends_on": "eval: doc.cargo_type == \"Air\""
+  },
+  {
+   "fieldname": "bmd",
+   "fieldtype": "Link",
+   "label": "BMD",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "smd",
+   "fieldtype": "Link",
+   "label": "SMD",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hod",
+   "fieldtype": "Link",
+   "label": "HOD",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "approved_by_bmd",
+   "fieldname": "approved_by_bmd",
+   "fieldtype": "Check",
+   "label": "Approved by BMD",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "approved_by_cmd",
+   "fieldname": "approved_by_cmd",
+   "fieldtype": "Check",
+   "label": "Approved by CMD",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "approved_by_smd",
+   "fieldname": "approved_by_smd",
+   "fieldtype": "Check",
+   "label": "Approved by SMD",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "approved_by_hod",
+   "fieldname": "approved_by_hod",
+   "fieldtype": "Check",
+   "label": "Approved by HOD",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "closing_mail_sent",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Closing Mail Sent"
+  },
+  {
+   "fieldname": "finance",
+   "fieldtype": "Link",
+   "label": "Finance",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "approved_by_finance",
+   "fieldname": "approved_by_finance",
+   "fieldtype": "Check",
+   "label": "Approved by Finance",
+   "no_copy": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "sent_for_finance",
+   "fieldname": "sent_for_finance",
+   "fieldtype": "Check",
+   "label": "Sent for Finance",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "gate_entry_completed",
+   "fieldname": "gate_entry_completed",
+   "fieldtype": "Check",
+   "label": "Gate Entry Completed",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "rejected_by_finance",
+   "fieldname": "rejected_by_finance",
+   "fieldtype": "Check",
+   "label": "Rejected by Finance",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejection_remark",
+   "fieldtype": "Small Text",
+   "label": "Rejection Remark",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "reopened",
+   "fieldtype": "Check",
+   "label": "Reopened",
+   "read_only": 1
+  },
+  {
+   "fieldname": "logistics_ops_section",
+   "fieldtype": "Section Break",
+   "label": "Logistics OPS"
+  },
+  {
+   "fieldname": "column_break_vqay",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "final_destination",
+   "fieldtype": "Link",
+   "label": "FInal Destination",
+   "mandatory_depends_on": "eval:!(doc.__islocal)",
+   "options": "Country"
+  },
+  {
+   "depends_on": "approved_by_finance",
+   "fieldname": "approved_by_finance_date_and_time",
+   "fieldtype": "Datetime",
+   "label": "Finance Approver Approved On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "approved_by_bmd",
+   "fieldname": "approved_by_bmd_date_and_time",
+   "fieldtype": "Datetime",
+   "label": "BMD Approved On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "approved_by_cmd",
+   "fieldname": "approved_by_cmd_date_and_time",
+   "fieldtype": "Datetime",
+   "label": "CMD Approved On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "approved_by_smd",
+   "fieldname": "approved_by_smd_date_and_time",
+   "fieldtype": "Datetime",
+   "label": "SMD Approved On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "approved_by_hod",
+   "fieldname": "approved_by_hod_date_and_time",
+   "fieldtype": "Datetime",
+   "label": "Approved by HOD Date and Time",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "label": "Prepared By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_by_time",
+   "fieldtype": "Datetime",
+   "label": "Prepared by Time",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-02 10:17:33.052693",
+ "make_attachments_public": 1,
+ "modified": "2025-10-25 15:53:12.447861",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Logistics Request",
@@ -1241,5 +1587,7 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "order_no",
- "track_changes": 1
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
 }

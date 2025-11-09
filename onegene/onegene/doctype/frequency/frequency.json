@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:frequency",
  "creation": "2023-09-20 12:38:03.506485",
@@ -26,7 +27,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-25 17:50:02.798648",
+ "modified": "2025-08-21 10:52:20.145403",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Frequency",
@@ -38,6 +39,7 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,

@@ -21,6 +21,15 @@ from frappe.utils.background_jobs import enqueue
 
 
 class OTPlanning(Document):
+
+	def on_trash(self):
+		if "System Manager" not in frappe.get_roles(frappe.session.user):
+			if self.workflow_state and self.workflow_state not in ["Draft", "Cancelled"]:
+				if self.docstatus == 0:
+					frappe.throw(
+						"Cannot delete this document as the workflow has moved to the next level.",
+						title="Not Permitted"
+					)	
 	
 	def get_dates(self, from_date, to_date):
 		no_of_days = date_diff(add_days(to_date, 1), from_date)
@@ -176,14 +185,14 @@ def get_production_heads():
 		return [user['name'] for user in production_head_users]
 	
 def get_md_hr():
-    users_with_roles = frappe.db.sql("""
-        SELECT DISTINCT user.name
-        FROM `tabUser` AS user
-        JOIN `tabHas Role` AS role
-        ON user.name = role.parent
-        WHERE role.role IN ('HR Manager', 'HR User', 'Managing Director')
-        AND user.enabled = 1
-    """, as_dict=True)
+	users_with_roles = frappe.db.sql("""
+		SELECT DISTINCT user.name
+		FROM `tabUser` AS user
+		JOIN `tabHas Role` AS role
+		ON user.name = role.parent
+		WHERE role.role IN ('HR Manager', 'HR User', 'Managing Director')
+		AND user.enabled = 1
+	""", as_dict=True)
 
-    if users_with_roles:
-        return [user['name'] for user in users_with_roles]
+	if users_with_roles:
+		return [user['name'] for user in users_with_roles]

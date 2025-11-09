@@ -44,7 +44,10 @@ from frappe.utils.background_jobs import enqueue
 import datetime as dt
 from datetime import datetime, timedelta
 from frappe.utils import cstr, add_days, date_diff, getdate,today,gzip_decompress
-	
+from frappe.utils.jinja import render_template
+from frappe.utils.pdf import get_pdf
+
+
 
 @frappe.whitelist()
 def return_sales_order_qty(item,posting_date):
@@ -322,8 +325,6 @@ def set_naming_contractor(employee_category = None,contractor = None,contractor_
 				str_len = str(leng)
 				lengt = len(str_len)
 				ty = str(lengt)
-				frappe.errprint(ty)
-				frappe.errprint(contractor_shortcode)
 				if ty == "4":
 					code == contractor_shortcode + str(leng)
 				elif ty == "3":
@@ -333,9 +334,7 @@ def set_naming_contractor(employee_category = None,contractor = None,contractor_
 				elif ty == "1":
 					code == contractor_shortcode + "000" + str(leng)
 		else:
-			frappe.errprint(contractor_shortcode)
 			code = str(contractor_shortcode) + "0001"
-			frappe.errprint(str(contractor_shortcode))
 		return code
 
 @frappe.whitelist()
@@ -592,7 +591,7 @@ def packing_list(sales_invoice):
 		for idx, i in enumerate(items):
 			html += "<tr>"
 			if idx == 0:
-				html += f'<td rowspan="{rowspan}">{pallet}</td>'
+				html += f'<td rowspan="{rowspan}">{pallet or ""}</td>'
 			total_qty += int(round(i.qty or 0))
 			total_boxes += int(round(i.total_boxes or 0))
 			total_pallets += int(round(i.total_pallets or 0))
@@ -644,7 +643,7 @@ def packing_list(sales_invoice):
 
 		html += f"""
 		<tr>
-			<td class="text-left">{pallet}</td>
+			<td class="text-left">{pallet or ""}</td>
 			<td class="text-right">{length}</td>
 			<td class="text-right">{breadth}</td>
 			<td class="text-right">{height}</td>
@@ -668,3 +667,492 @@ def packing_list(sales_invoice):
 
 
 
+
+@frappe.whitelist()
+def mr_required_from_pmr(bom):
+	item_code = frappe.db.get_value("BOM", bom, "item")
+	from frappe.utils import today, add_days
+
+	start_datetime = f"{today()} 08:31:00"
+	end_datetime = f"{add_days(today(), 1)} 08:30:00"
+
+	start_datetime = frappe.utils.get_datetime(start_datetime)
+	end_datetime = frappe.utils.get_datetime(end_datetime)
+
+	result = frappe.db.sql("""
+		SELECT name FROM `tabProduction Material Request`
+		WHERE creation BETWEEN %s AND %s
+	""", (start_datetime, end_datetime))
+
+	if not result:
+		frappe.throw("No Production Material Request found in the given time range.")
+
+	pmr = result[0][0]
+	total_required_plan = frappe.db.sql("""
+		SELECT
+			COALESCE((SELECT SUM(required_plan) FROM `tabAssembly Item` 
+					WHERE parent = %s AND item_code = %s), 0) +
+			COALESCE((SELECT SUM(required_plan) FROM `tabSub Assembly Item` 
+					WHERE parent = %s AND item_code = %s), 0) AS total
+	""", (pmr, item_code, pmr, item_code))[0][0]
+	return total_required_plan
+
+
+@frappe.whitelist()
+def explode_and_update_bom_in_mri(bom, source_warehouse):
+	from frappe.utils import today, add_days
+
+	start_datetime = f"{today()} 08:31:00"
+	end_datetime = f"{add_days(today(), 1)} 08:30:00"
+
+	start_datetime = frappe.utils.get_datetime(start_datetime)
+	end_datetime = frappe.utils.get_datetime(end_datetime)
+
+	result = frappe.db.sql("""
+		SELECT name FROM `tabProduction Material Request`
+		WHERE creation BETWEEN %s AND %s
+	""", (start_datetime, end_datetime))
+
+	if not result:
+		frappe.throw("No Production Material Request found in the given time range.")
+
+	pmr = result[0][0]
+
+	data = []
+	exploded_items = explode_bom(bom)
+
+	for row in exploded_items:
+		item_code = row["item_code"]
+		if frappe.db.exists("Sub Assembly Item", {"item_code": item_code, "parent": pmr, "warehouse": source_warehouse}) or frappe.db.exists("Raw Materials", {"item_code": item_code, "parent": pmr, "warehouse": source_warehouse}):
+			data.append({"item_code": item_code})
+	return data
+
+
+@frappe.whitelist()
+def explode_bom(bom):
+	bom_qty = frappe.db.get_value("BOM", bom, "quantity") or 1
+	bom_items = frappe.get_all("BOM Item", filters={"parent": bom}, fields=["item_code", "qty", "bom_no"])
+	exploded_items = []
+
+	for item in bom_items:
+		exploded_items.append({
+			"item_code": item["item_code"],
+			"qty": (item["qty"] * bom_qty) or 0
+		})
+		# if item.get("bom_no"):
+		# 	# Recursively add sub-assembly items
+		# 	child_items = explode_bom(item["bom_no"])
+		# 	exploded_items.extend(child_items)
+
+	return exploded_items
+
+
+@frappe.whitelist()
+def get_items_from_production_material_request(doctype, txt, searchfield, start, page_len, filters):
+	start_datetime = f"{today()} 08:31:00"
+	end_datetime = f"{add_days(today(), 1)} 08:30:00"
+
+	start_datetime = frappe.utils.get_datetime(start_datetime)
+	end_datetime = frappe.utils.get_datetime(end_datetime)
+
+	result = frappe.db.sql("""
+		SELECT name FROM `tabProduction Material Request`
+		WHERE creation BETWEEN %s AND %s
+	""", (start_datetime, end_datetime))
+
+	if result:
+		production_material_request = result[0][0]
+	else:
+		# production_material_request = "PMR-00013"
+		frappe.throw("No Production Material Request found in the given time range.")
+
+	if isinstance(filters, str):
+		filters = json.loads(filters)
+
+	source_warehouse = filters.get("source_warehouse")
+	if not source_warehouse:
+		return []
+
+	search_text = f"%{txt.strip()}%" if txt else "%"
+	start = int(start)
+	page_len = int(page_len)
+	return frappe.db.sql("""
+		SELECT DISTINCT item_code, item_name
+		FROM (
+			SELECT rm.item_code, rm.item_name
+			FROM `tabRaw Materials` rm
+			WHERE rm.parent = %s AND rm.warehouse = %s
+
+			UNION ALL
+
+			SELECT sai.item_code, sai.item_name
+			FROM `tabSub Assembly Item` sai
+			WHERE sai.parent = %s AND sai.warehouse = %s
+		) AS merged_items
+		WHERE (item_code LIKE %s OR item_name LIKE %s)
+	""", (production_material_request, source_warehouse, production_material_request, source_warehouse, search_text, search_text))
+
+
+
+@frappe.whitelist()
+def get_pmr_data(item_code, name=None, warehouse=None):
+	if not warehouse:
+		return
+	start_datetime = f"{today()} 08:31:00"
+	end_datetime = f"{add_days(today(), 1)} 08:30:00"
+
+	start_datetime = frappe.utils.get_datetime(start_datetime)
+	end_datetime = frappe.utils.get_datetime(end_datetime)
+
+	result = frappe.db.sql("""
+		SELECT name FROM `tabProduction Material Request`
+		WHERE creation BETWEEN %s AND %s
+	""", (start_datetime, end_datetime))
+	mr_qty = frappe.db.sql("""SELECT sum(mri.custom_requesting_qty)
+						FROM `tabMaterial Request` mr
+						INNER JOIN `tabMaterial Request Item` mri
+						ON mri.parent = mr.name 
+						WHERE mri.item_code = %s AND mri.from_warehouse = %s AND
+							mr.material_request_type = 'Material Transfer' AND parent != %s
+							AND mr.creation between %s AND %s""",
+						(item_code, warehouse, name, start_datetime, end_datetime))[0][0] or 0
+	if result:
+		production_material_request = result[0][0]
+	else:
+		# production_material_request = "PMR-00013"
+		frappe.throw("No Production Material Request found in the given time range.")
+	pmr = frappe.db.sql("""
+		SELECT 
+			item_code,
+			item_name,
+			(SUM(required_plan) - %s) AS total_required_qty,
+			SUM(stock_in_shop_floor) AS shop_floor_qty
+		FROM (
+			SELECT 
+				rm.item_code, 
+				rm.item_name, 
+				rm.required_plan, 
+				rm.stock_in_shop_floor
+			FROM `tabRaw Materials` rm
+			WHERE 
+				rm.parent = %s AND 
+				rm.item_code = %s AND 
+				rm.warehouse = %s
+
+			UNION ALL
+
+			SELECT 
+				sai.item_code, 
+				sai.item_name, 
+				sai.required_plan, 
+				sai.stock_in_shop_floor
+			FROM `tabSub Assembly Item` sai
+			WHERE 
+				sai.parent = %s AND 
+				sai.item_code = %s AND 
+				sai.warehouse = %s
+		) AS combined
+		GROUP BY item_code, item_name
+	""", (
+		flt(mr_qty), 
+		production_material_request, item_code, warehouse,  # for Raw Materials
+		production_material_request, item_code, warehouse   # for Sub Assembly Item
+	), as_dict=1)
+
+	data = []
+
+	for item in pmr:
+		data.append({
+			"item_code": item.item_code,
+			"item_name": item.item_name,
+			"pack_size": frappe.db.get_value("Item", item.item_code, "pack_size"),
+			"uom": frappe.db.get_value("Item", item.item_code, "stock_uom"),
+			"total_required_qty": item.total_required_qty or 0,
+			"shop_floor_qty": item.shop_floor_qty or 0,
+			"actual_qty": flt(frappe.db.get_value("Bin", {
+				"item_code": item.item_code,
+				"warehouse": warehouse
+			}, "actual_qty")) or 0
+		})
+	return data
+
+
+
+@frappe.whitelist()
+def get_qid_for_job_card_from_child_row(parent, child_doctype, child_name):
+	row = frappe.get_doc(child_doctype, child_name)
+	parent_doc = frappe.get_doc("Job Card", parent)
+
+	context = {"row": row, "parent": parent_doc}
+	pack_size = parent_doc.custom_pack_size or 0
+	no_of_bins = math.ceil(row.completed_qty / parent_doc.custom_pack_size) if parent_doc.custom_pack_size > 0 else 1
+	if parent_doc.custom_pack_size == 0:
+		pack_size = row.completed_qty
+	# Inline HTML instead of external template
+	template = """<style>
+				td {
+					font-size: 12px;
+					white-space: nowrap; 
+				}
+				</style>"""
+	if (row.completed_qty % pack_size) > 0:
+		for i in range(1, no_of_bins):
+			template += f"""
+			<table style="margin-bottom: 20px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/quality-pending/' + parent_doc.custom_quality_pending) }" alt="QR Code" />
+					</td>
+					<td><b><br>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: green;"><b>&nbsp;Accepted Quantity: { int(pack_size) }</b></td>
+				</tr>
+			</table>
+			"""
+	else:
+		for i in range(1, no_of_bins + 1):
+			template += f"""
+			<table style="margin-bottom: 20px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/quality-pending/' + parent_doc.custom_quality_pending) }" alt="QR Code" />
+					</td>
+					<td><b><br>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: green;"><b>&nbsp;Accepted Quantity: { int(pack_size) }</b></td>
+				</tr>
+			</table>
+			"""
+	if (row.completed_qty % pack_size) > 0:
+			template += f"""
+			<table style="margin-bottom: 20px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/quality-pending/' + parent_doc.custom_quality_pending) }" alt="QR Code" />
+					</td>
+					<td><b><br>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: green;"><b>&nbsp;Accepted Quantity: { int(row.completed_qty % pack_size) }</b></td>
+				</tr>
+			</table>
+			"""
+	if row.custom_rejected_qty > 0:
+		template += f"""
+			<table style="margin-bottom: 20px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/job-card/' + parent_doc.name) }" alt="QR Code" />
+					</td>
+					<td><b><br>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: red;"><b>&nbsp;Rejected Quantity: { int(row.custom_rejected_qty) }</b></td>
+				</tr>
+			</table>
+			"""
+	if row.custom_rework_qty > 0:
+		template += f"""
+			<table style="margin-bottom: 20px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/job-card/' + parent_doc.name) }" alt="QR Code" />
+					</td>
+					<td><b><br>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: orange;"><b>&nbsp;Rework Quantity: { int(row.custom_rework_qty) }</b></td>
+				</tr>
+			</table>
+			"""
+	html = render_template(template, context)
+
+	page_width = "210mm"
+	if row.custom_rejected_qty > 0 and row.custom_rework_qty > 0:
+		page_height = "210mm"
+	elif row.custom_rejected_qty > 0 or row.custom_rework_qty > 0:
+		page_height = "140mm"
+	else:
+		page_height = "70mm"
+
+	pdf_file = get_pdf(html, options={
+		"page-width": page_width,
+		"page-height": page_height,
+		"margin-top": "5mm",
+		"margin-bottom": "5mm",
+		"margin-left": "5mm",
+		"margin-right": "5mm"
+	})
+
+	file_name = f"{child_name}.pdf"
+	file_doc = frappe.get_doc({
+		"doctype": "File",
+		"file_name": file_name,
+		"is_private": 1,
+		"content": pdf_file
+	})
+	file_doc.save(ignore_permissions=True)
+
+	return file_doc.file_url
+
+@frappe.whitelist()
+def get_qr_html_for_child_row(parent, child_doctype, child_name):
+	row = frappe.get_doc(child_doctype, child_name)
+	parent_doc = frappe.get_doc("Job Card", parent)
+	if not frappe.db.exists("Item", {"item_code": parent_doc.production_item, "item_billing_type": "Billing"}):
+		frappe.throw("QR code can only be generated for billing items.",
+			   title="Not Permitted")
+		frappe.throw("QR குறியீடு செலவுத் தொடர்பான பொருட்களுக்காக மட்டுமே உருவாக்கப்படலாம்.",
+             title="Not Permitted")
+
+	context = {"row": row, "parent": parent_doc}
+	pack_size = parent_doc.custom_pack_size or 0
+	no_of_bins = math.ceil(row.completed_qty / parent_doc.custom_pack_size) if parent_doc.custom_pack_size > 0 else 1
+	if parent_doc.custom_pack_size == 0:
+		pack_size = row.completed_qty
+	# Inline HTML instead of external template
+	template = """<style>
+				table {
+					margin-left: 10px;
+				}
+				td {
+					font-size: 12px;
+					white-space: nowrap; 
+				}
+				</style>"""
+	if (row.completed_qty % pack_size) > 0:
+		for i in range(1, no_of_bins):
+			template += f"""
+			<table style="margin-bottom: 10px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/quality-pending/' + parent_doc.custom_quality_pending) }" alt="QR Code" />
+					</td>
+					<td><b>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: green;"><b>&nbsp;Accepted Quantity: { int(pack_size) }</b></td>
+				</tr>
+			</table>
+			"""
+	else:
+		for i in range(1, no_of_bins + 1):
+			template += f"""
+			<table style="margin-bottom: 10px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/quality-pending/' + parent_doc.custom_quality_pending) }" alt="QR Code" />
+					</td>
+					<td><b>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: green;"><b>&nbsp;Accepted Quantity: { int(pack_size) }</b></td>
+				</tr>
+			</table>
+			"""
+	if (row.completed_qty % pack_size) > 0:
+			template += f"""
+			<table style="margin-bottom: 10px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/quality-pending/' + parent_doc.custom_quality_pending) }" alt="QR Code" />
+					</td>
+					<td><b>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: green;"><b>&nbsp;Accepted Quantity: { int(row.completed_qty % pack_size) }</b></td>
+				</tr>
+			</table>
+			"""
+	if row.custom_rejected_qty > 0:
+		template += f"""
+			<table style="margin-bottom: 10px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/job-card/' + parent_doc.name) }" alt="QR Code" />
+					</td>
+					<td><b>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: red;"><b>&nbsp;Rejected Quantity: { int(row.custom_rejected_qty) }</b></td>
+				</tr>
+			</table>
+			"""
+	if row.custom_rework_qty > 0:
+		template += f"""
+			<table style="margin-bottom: 10px;">
+				<tr>
+					<td rowspan=5>
+						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ frappe.utils.get_url('/app/job-card/' + parent_doc.name) }" alt="QR Code" />
+					</td>
+					<td><b>&nbsp;Date: { parent_doc.posting_date }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Job Card: { parent_doc.name }</b></td>
+				</tr>
+				<tr>
+					<td><b>&nbsp;Item: { parent_doc.production_item } - { parent_doc.item_name }</b></td>
+				</tr>
+				<tr>
+					<td style="color: orange;"><b>&nbsp;Rework Quantity: { int(row.custom_rework_qty) }</b></td>
+				</tr>
+			</table>
+			"""
+	html = render_template(template, context)
+	return html

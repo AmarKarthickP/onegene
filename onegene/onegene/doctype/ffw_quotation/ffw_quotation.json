@@ -11,7 +11,12 @@
   "quoted_value",
   "clearance_amount",
   "total",
-  "percentage_on_purchase_value"
+  "percentage_on_purchase_value",
+  "freight_charges",
+  "cha_charges",
+  "porthandling_charges",
+  "total_shipment_cost",
+  "quotation"
  ],
  "fields": [
   {
@@ -23,7 +28,8 @@
    "reqd": 1
   },
   {
-   "default": "USD",
+   "columns": 1,
+   "default": "INR",
    "fieldname": "currency",
    "fieldtype": "Read Only",
    "in_list_view": 1,
@@ -31,37 +37,81 @@
   },
   {
    "columns": 1,
+   "default": "0",
    "fieldname": "quoted_value",
    "fieldtype": "Float",
+   "hidden": 1,
    "in_list_view": 1,
-   "label": "Quoted Value"
+   "label": "Amount"
   },
   {
    "columns": 1,
+   "default": "0",
    "fieldname": "clearance_amount",
    "fieldtype": "Float",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Clearance Amount"
   },
   {
    "columns": 1,
+   "default": "0",
    "fieldname": "total",
    "fieldtype": "Float",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Total"
   },
   {
    "columns": 1,
+   "default": "0",
    "fieldname": "percentage_on_purchase_value",
    "fieldtype": "Percent",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "% on Purchase Value "
+  },
+  {
+   "fieldname": "quotation",
+   "fieldtype": "Attach",
+   "in_list_view": 1,
+   "label": "Quotation"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "freight_charges",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Freight Charges"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "cha_charges",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "CHA Charges"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "porthandling_charges",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Port/Handling Charges"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "total_shipment_cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Shipment Cost",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-05 15:23:09.132515",
+ "modified": "2025-10-24 15:05:53.255576",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "FFW Quotation",

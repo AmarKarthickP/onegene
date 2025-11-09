@@ -7,6 +7,14 @@ from frappe.model.document import Document
 
 class ResignationForm(Document):
 	pass
+	def on_trash(self):
+		if "System Manager" not in frappe.get_roles(frappe.session.user):
+			if self.workflow_state and self.workflow_state not in ["Draft", "Cancelled"]:
+				if self.docstatus == 0:
+					frappe.throw(
+						"Cannot delete this document as the workflow has moved to the next level.",
+						title="Not Permitted"
+					)
 	#It will update all these below mentioned values in employee mis of that employee on approval
 	def on_submit(self):
 		if self.workflow_state == 'Approved':

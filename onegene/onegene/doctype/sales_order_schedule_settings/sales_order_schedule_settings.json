@@ -7,34 +7,37 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "attach",
-  "download",
+  "html_1",
+  "html_2",
+  "html_3",
   "column_break_nuztg",
+  "download",
+  "attach",
+  "html_4",
   "upload",
-  "update",
+  "column_break_ehys",
+  "response",
+  "response_data",
   "section_break_bom8n",
+  "note",
+  "warning_data",
+  "error_data",
   "html"
  ],
  "fields": [
   {
    "fieldname": "attach",
-   "fieldtype": "Attach",
-   "label": "Attach"
+   "fieldtype": "Attach"
   },
   {
    "fieldname": "column_break_nuztg",
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.attach",
    "fieldname": "upload",
    "fieldtype": "Button",
    "label": "Upload"
-  },
-  {
-   "fieldname": "update",
-   "fieldtype": "Button",
-   "hidden": 1,
-   "label": "Update"
   },
   {
    "fieldname": "download",
@@ -49,13 +52,60 @@
    "fieldname": "html",
    "fieldtype": "HTML",
    "label": "HTML"
+  },
+  {
+   "fieldname": "html_1",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "html_2",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "html_3",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "HTML",
+   "label": "Note"
+  },
+  {
+   "fieldname": "column_break_ehys",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "html_4",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "response",
+   "fieldtype": "HTML",
+   "label": "Response"
+  },
+  {
+   "fieldname": "warning_data",
+   "fieldtype": "HTML",
+   "label": "Warning Data"
+  },
+  {
+   "fieldname": "error_data",
+   "fieldtype": "HTML",
+   "label": "Error data"
+  },
+  {
+   "fieldname": "response_data",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Response Data"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-25 17:49:51.959667",
+ "make_attachments_public": 1,
+ "modified": "2025-11-04 11:25:15.400472",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Sales Order Schedule Settings",

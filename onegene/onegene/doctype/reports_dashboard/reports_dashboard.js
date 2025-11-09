@@ -2,6 +2,15 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Reports Dashboard", {
+    onload(frm){
+        frm.set_query("shift", function() {
+            return {
+                filters: {
+                    custom_disabled: 0
+                }
+            };
+        });
+    },
     download:function(frm){
         if (frm.doc.report == 'Bulk Salary Slip Report') {
             if(frm.doc.from_date && frm.doc.to_date){

@@ -1,14 +1,15 @@
 {
  "charts": [],
- "content": "[{\"id\":\"kb3XPLg8lb\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Shortcuts</span>\",\"col\":12}},{\"id\":\"nWd2KJPW8l\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item\",\"col\":3}},{\"id\":\"0RuMgnACNo\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"BOM\",\"col\":3}},{\"id\":\"UMkCugq_8B\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":3}},{\"id\":\"CPxEyhaf3G\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"snrzfbFr5Y\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customer\",\"col\":3}},{\"id\":\"Fbgco7zyBq\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Work Order\",\"col\":3}},{\"id\":\"z6MZACH842\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"6W7DYUPsTQ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Material Request\",\"col\":3}},{\"id\":\"GAzpHWZpOW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Group\",\"col\":3}},{\"id\":\"uHaQLdUaHq\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Type\",\"col\":3}},{\"id\":\"P0cLS7XFWN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Group\",\"col\":3}},{\"id\":\"ND5gZWFNGG\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customer Group\",\"col\":3}},{\"id\":\"QrXk2rzud4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"UOM\",\"col\":3}},{\"id\":\"EWk_WA4O2H\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Warehouse\",\"col\":3}},{\"id\":\"AtTVh_HeTF\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Operation\",\"col\":3}},{\"id\":\"gCto8GZEHm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Kanban Quantity\",\"col\":3}},{\"id\":\"IzS66kVNce\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Kanban Quantity Settings\",\"col\":3}},{\"id\":\"8leecfuWI0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Rejection Reason\",\"col\":3}},{\"id\":\"uV1tb4PiIx\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Rework Reason\",\"col\":3}},{\"id\":\"n9OgXaSEAg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order Schedule Settings\",\"col\":3}},{\"id\":\"b6EfifCe-z\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order Schedule\",\"col\":3}},{\"id\":\"qPDnRKZfqb\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Production Plan Settings\",\"col\":3}},{\"id\":\"NjeGF5952y\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Production Plan\",\"col\":3}},{\"id\":\"Xg9x4GvNrP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Production Plan Report\",\"col\":3}},{\"id\":\"hbpiG1kVNO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier\",\"col\":3}},{\"id\":\"5S2q_m3MYV\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier DN\",\"col\":3}},{\"id\":\"L_enmUKFda\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order\",\"col\":3}},{\"id\":\"CsIYyPXGyU\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order Schedule\",\"col\":3}},{\"id\":\"DTofG1NTiP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order Schedule Settings\",\"col\":3}},{\"id\":\"L8fax2tJhf\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Scan QR\",\"col\":3}},{\"id\":\"iDPffNUlY9\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"SUP JO\",\"col\":3}},{\"id\":\"d_KVM1gsf9\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"i22oHCClOd\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase\",\"col\":4}}]",
+ "content": "[{\"id\":\"kb3XPLg8lb\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Masters &amp; Report</span>\",\"col\":12}},{\"id\":\"hDKK0yuhWB\",\"type\":\"card\",\"data\":{\"card_name\":\"Item\",\"col\":4}},{\"id\":\"eoYOAEG_3u\",\"type\":\"card\",\"data\":{\"card_name\":\"Supplier & Customer\",\"col\":4}},{\"id\":\"i22oHCClOd\",\"type\":\"card\",\"data\":{\"card_name\":\"Purchase\",\"col\":4}},{\"id\":\"BVTMgz8sUm\",\"type\":\"card\",\"data\":{\"card_name\":\"Sales\",\"col\":4}},{\"id\":\"uhsJN_Sti9\",\"type\":\"card\",\"data\":{\"card_name\":\"Production\",\"col\":4}},{\"id\":\"GcuAeTpB2g\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"3rw2dvVO3n\",\"type\":\"card\",\"data\":{\"card_name\":\"Tools\",\"col\":4}}]",
  "creation": "2020-01-23 13:46:38.833076",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
- "hide_custom": 0,
- "icon": "getting-started",
+ "hide_custom": 1,
+ "icon": "color-home",
  "idx": 0,
+ "indicator_color": "",
  "is_hidden": 0,
  "label": "Home",
  "links": [
@@ -202,8 +203,254 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Purchase",
+   "label": "Item",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item",
+   "link_count": 0,
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item Group",
+   "link_count": 0,
+   "link_to": "Item Group",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item Type",
+   "link_count": 0,
+   "link_to": "Item Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "UOM",
+   "link_count": 0,
+   "link_to": "UOM",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "BOM",
+   "link_count": 0,
+   "link_to": "BOM",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Warehouse",
+   "link_count": 0,
+   "link_to": "Warehouse",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Supplier & Customer",
    "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Supplier",
+   "link_count": 0,
+   "link_to": "Supplier",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Supplier Group",
+   "link_count": 0,
+   "link_to": "Supplier Group",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customer",
+   "link_count": 0,
+   "link_to": "Customer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customer Group",
+   "link_count": 0,
+   "link_to": "Customer Group",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Order Schedule",
+   "link_count": 0,
+   "link_to": "Purchase Order Schedule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Order Schedule",
+   "link_count": 0,
+   "link_to": "Sales Order Schedule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Purchase Order",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "SUP JO",
+   "link_count": 0,
+   "link_to": "SUP JO",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Tools",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Order Schedule Settings",
+   "link_count": 0,
+   "link_to": "Purchase Order Schedule Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Order",
+   "link_count": 0,
+   "link_to": "Sales Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Order Schedule",
+   "link_count": 0,
+   "link_to": "Sales Order Schedule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Order Schedule Settings",
+   "link_count": 0,
+   "link_to": "Sales Order Schedule Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Delivery Note",
+   "link_count": 0,
+   "link_to": "Delivery Note",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Invoice",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "MRP Report",
+   "link_count": 0,
+   "link_to": "MRP Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase",
+   "link_count": 5,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -241,16 +488,126 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Supplier Delivery Note",
+   "label": "Advance Shipping Note (ASN)",
    "link_count": 0,
-   "link_to": "Supplier Delivery Note",
+   "link_to": "Advance Shipping Note",
    "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "Purchase Order",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "SUP JO",
+   "link_count": 0,
+   "link_to": "SUP JO",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Production",
+   "link_count": 9,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Production Kanban Report",
+   "link_count": 0,
+   "link_to": "Production Kanban Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Work Order",
+   "link_count": 0,
+   "link_to": "Work Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Operation",
+   "link_count": 0,
+   "link_to": "Operation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Job Card",
+   "link_count": 0,
+   "link_to": "Job Card",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Material Request",
+   "link_count": 0,
+   "link_to": "Material Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Entry",
+   "link_count": 0,
+   "link_to": "Stock Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Rejection Reason",
+   "link_count": 0,
+   "link_to": "Rejection Reason",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Rework Reason",
+   "link_count": 0,
+   "link_to": "Rework Reason",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Production Sheet",
+   "link_count": 0,
+   "link_to": "Production Sheet",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2025-05-24 12:25:57.429402",
- "modified_by": "amar.p@groupteampro.com",
+ "modified": "2025-10-31 09:16:12.669350",
+ "modified_by": "senthilkumar.r@onegeneindia.in",
  "module": "ONEGENE",
  "name": "Home",
  "number_cards": [],
@@ -265,230 +622,6 @@
   }
  ],
  "sequence_id": 3.0,
- "shortcuts": [
-  {
-   "color": "Red",
-   "doc_view": "Report Builder",
-   "label": "Production Plan Report",
-   "link_to": "Production Plan Report",
-   "stats_filter": "[[\"Production Plan Report\",\"date\",\"Timespan\",\"today\",false]]",
-   "type": "DocType"
-  },
-  {
-   "label": "Sales Invoice",
-   "link_to": "Sales Invoice",
-   "stats_filter": "[[\"Sales Invoice\",\"posting_date\",\"Timespan\",\"this month\",false]]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Supplier DN",
-   "link_to": "Supplier Delivery Note",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "label": "Item",
-   "link_to": "Item",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "SUP JO",
-   "type": "URL",
-   "url": "https://erp.onegeneindia.in/app/purchase-order/view/report/SUP%20JO"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Sales Order Schedule Settings",
-   "link_to": "Sales Order Schedule Settings",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Production Plan Settings",
-   "link_to": "Production Plan Settings",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Production Plan",
-   "link_to": "Production Plan",
-   "stats_filter": "[[\"Production Plan\",\"posting_date\",\"Timespan\",\"this month\",false]]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Sales Order",
-   "link_to": "Sales Order",
-   "stats_filter": "[[\"Sales Order\",\"transaction_date\",\"Timespan\",\"this month\",false]]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Item Group",
-   "link_to": "Item Group",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "BOM",
-   "link_to": "BOM",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Kanban Quantity Settings",
-   "link_to": "Kanban Quantity Settings",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Material Request",
-   "link_to": "Material Request",
-   "stats_filter": "[[\"Material Request\",\"transaction_date\",\"Timespan\",\"this month\",false]]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Work Order",
-   "link_to": "Work Order",
-   "stats_filter": "[[\"Work Order\",\"actual_start_date\",\"Timespan\",\"this month\",false]]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "UOM",
-   "link_to": "UOM",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Item Type",
-   "link_to": "Item Type",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Scan QR",
-   "type": "URL",
-   "url": "https://erp.onegeneindia.in/scan_qr"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Kanban Quantity",
-   "link_to": "Kanban Quantity",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Sales Order Schedule",
-   "link_to": "Sales Order Schedule",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Supplier Group",
-   "link_to": "Supplier Group",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Stock Entry",
-   "link_to": "Stock Entry",
-   "stats_filter": "[[\"Stock Entry\",\"posting_date\",\"Timespan\",\"this month\",false]]",
-   "type": "DocType"
-  },
-  {
-   "label": "Customer",
-   "link_to": "Customer",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Purchase Order",
-   "link_to": "Purchase Order",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Warehouse",
-   "link_to": "Warehouse",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Customer Group",
-   "link_to": "Customer Group",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Purchase Order Schedule",
-   "link_to": "Purchase Order Schedule",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Supplier",
-   "link_to": "Supplier",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Operation",
-   "link_to": "Operation",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Purchase Order Schedule Settings",
-   "link_to": "Purchase Order Schedule Settings",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Rejection Reason",
-   "link_to": "Rejection Reason",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Rework Reason",
-   "link_to": "Rework Reason",
-   "type": "DocType"
-  }
- ],
+ "shortcuts": [],
  "title": "Home"
 }

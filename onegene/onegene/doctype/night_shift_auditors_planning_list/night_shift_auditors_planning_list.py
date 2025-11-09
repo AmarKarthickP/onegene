@@ -25,6 +25,14 @@ from frappe.utils import (
 
 
 class NightShiftAuditorsPlanningList(Document):
+	def on_trash(self):
+		if "System Manager" not in frappe.get_roles(frappe.session.user):
+			if self.workflow_state and self.workflow_state not in ["Draft", "Cancelled"]:
+				if self.docstatus == 0:
+					frappe.throw(
+						"Cannot delete this document as the workflow has moved to the next level.",
+						title="Not Permitted"
+					)
 	# create compensatory off allocation for night shift
 	def on_submit(self):
 		if self.workflow_state == "Approved":

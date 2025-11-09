@@ -1,13 +1,15 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:name1",
+ "autoname": "field:pallet_no",
  "creation": "2025-05-28 11:09:35.087229",
  "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "name1",
+  "column_break_wjb9",
+  "pallet_no",
   "dimensions_section",
   "length",
   "column_break_wucn",
@@ -101,11 +103,21 @@
    "label": "Weight UOM",
    "options": "UOM",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_wjb9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pallet_no",
+   "fieldtype": "Data",
+   "label": "Pallet No",
+   "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-28 11:09:35.087229",
+ "modified": "2025-06-09 17:17:29.386627",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Pallet",

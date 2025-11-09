@@ -1,8 +1,9 @@
 import frappe
-from frappe import _, msgprint
+from frappe import _, msgprint, bold
 from frappe.model.naming import make_autoname
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Sum
+import json
 from frappe.utils import (
 	add_days,
 	ceil,
@@ -31,6 +32,16 @@ from hrms.hr.doctype.compensatory_leave_request.compensatory_leave_request impor
 from hrms.hr.doctype.leave_application.leave_application import get_approved_leaves_for_period
 from hrms.hr.doctype.leave_application.leave_application import get_holidays
 # from hrms.hr.doctype.salary_slip.salary_slip import SalarySlip
+from erpnext.manufacturing.doctype.job_card.job_card import JobCard
+from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry
+from erpnext.manufacturing.doctype.production_plan.production_plan import ProductionPlan
+from frappe.utils import flt, get_link_to_form, time_diff_in_seconds, get_datetime, add_days, format_datetime, time_diff_in_hours
+
+class OperationSequenceError(frappe.ValidationError):
+	pass
+class OverlapError(frappe.ValidationError):
+	pass
+
 from frappe.utils import (
 	add_days,
 	cint,
@@ -81,8 +92,6 @@ class CustomLeaveApplication(LeaveApplication):
 					if not frappe.db.get_value("Leave Type", self.leave_type, "include_holiday"):
 						holidays = get_holidays(self.employee, date_of_joining, self.from_date)
 					number_of_days = number_of_days - leave_days - holidays
-					frappe.errprint(number_of_days)
-					frappe.errprint(leave_type.applicable_after)
 					
 					if number_of_days < leave_type.applicable_after:
 						frappe.throw(
@@ -91,20 +100,16 @@ class CustomLeaveApplication(LeaveApplication):
 							)
 						)
 			if leave_type.custom_applicable_before_working_days > 0:
-				frappe.errprint("HI")
 				date_of_joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
 				leave_days = get_approved_leaves_for_period(
 					self.employee, False, date_of_joining, self.from_date
 				)
 				number_of_days = date_diff(getdate(self.from_date), date_of_joining)
 				if number_of_days >= 0:
-					frappe.errprint("HIIII")
 					holidays = 0
 					if not frappe.db.get_value("Leave Type", self.leave_type, "include_holiday"):
 						holidays = get_holidays(self.employee, date_of_joining, self.from_date)
 					number_of_days = number_of_days - leave_days - holidays
-					frappe.errprint(number_of_days)
-					frappe.errprint(leave_type.custom_applicable_before_working_days)
 					if number_of_days < leave_type.custom_applicable_before_working_days:
 						frappe.throw(
 							_("{0} applicable after {1} working days").format(
@@ -212,7 +217,6 @@ class CustomCompensatoryLeaveRequest(CompensatoryLeaveRequest):
 				if leave_period:
 					leave_allocation = self.get_existing_allocation_for_period(leave_period)
 					if leave_allocation:
-						frappe.errprint(leave_allocation.name)
 						leave_allocation.new_leaves_allocated += date_difference
 						leave_allocation.validate()
 						leave_allocation.db_set("new_leaves_allocated", leave_allocation.total_leaves_allocated)
@@ -378,8 +382,324 @@ class CustomAttendanceRequest(AttendanceRequest):
 	# attendance only updated only application got approved
 	def on_submit(self):
 		if self.workflow_state=='Approved':
-			frappe.errprint("test")
 			self.create_attendance_records()
 		else:
 			pass
 
+class CustomJobCard(JobCard):
+	def validate_time_logs(self):
+		self.total_time_in_mins = 0.0
+		self.total_completed_qty = 0.0
+
+		if self.get("time_logs"):
+			for d in self.get("time_logs"):
+				if d.to_time and get_datetime(d.from_time) > get_datetime(d.to_time):
+					to_dt = get_datetime(d.to_time)
+					to_dt_next_day = add_days(to_dt, 1)
+					d.to_time = format_datetime(to_dt_next_day)
+					# frappe.throw(_("Row {0}: From time must be less than to time").format(d.idx))
+
+				# data = self.get_overlap_for(d)
+				# if data:
+				# 	frappe.throw(
+				# 		_("Row {0}: From Time and To Time of {1} is overlapping with {2}").format(
+				# 			d.idx, self.name, data.name
+				# 		),
+				# 		OverlapError,
+				# 	)
+
+				if d.from_time and d.to_time:
+					from_dt = parse_datetime_safe(d.from_time)
+					to_dt = parse_datetime_safe(d.to_time)
+
+					if from_dt > to_dt:
+						to_dt = add_days(to_dt, 1)
+
+					d.to_time = to_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+				if d.completed_qty and not self.sub_operations:
+					self.total_completed_qty += d.completed_qty
+
+			self.total_completed_qty = flt(self.total_completed_qty, self.precision("total_completed_qty"))
+
+		for row in self.sub_operations:
+			self.total_completed_qty += row.completed_qty
+			
+	def set_process_loss(self):
+		precision = self.precision("total_completed_qty")
+		self.process_loss_qty = 0.0
+		previous_sequence = self.sequence_id - 1
+		previous_sequence_plq = frappe.db.get_value("Job Card", {"sequence_id": previous_sequence, "work_order": self.work_order}, "process_loss_qty") or 0
+		if self.total_completed_qty and self.for_quantity > self.total_completed_qty:
+			self.process_loss_qty = flt(self.custom_rejected_qty, precision) + flt(self.custom_rework_rejected_qty, precision) + flt(previous_sequence_plq, precision)
+	def validate_sequence_id(self):
+		if self.is_corrective_job_card:
+			return
+
+		if not (self.work_order and self.sequence_id):
+			return
+
+		current_operation_qty = 0.0
+		data = self.get_current_operation_data()
+		if data and len(data) > 0:
+			current_operation_qty = flt(data[0].completed_qty)
+
+		current_operation_qty += flt(self.total_completed_qty)
+		data = frappe.get_all(
+			"Work Order Operation",
+			fields=["operation", "status", "completed_qty", "sequence_id"],
+			filters={"docstatus": 1, "parent": self.work_order, "sequence_id": ("<", self.sequence_id)},
+			order_by="sequence_id, idx",
+		)
+
+		message = "Job Card {0}: As per the sequence of the operations in the work order {1}".format(
+			bold(self.name), bold(get_link_to_form("Work Order", self.work_order))
+		)
+		message = "Job Card {0}: work order {1} செயல்முறை வரிசை படி".format(
+			bold(self.name), bold(get_link_to_form("Work Order", self.work_order)))
+
+
+		for row in data:
+			if row.completed_qty < current_operation_qty:
+				frappe.throw(
+					_("{0}, complete the operation {1} before the operation {2}.").format(
+						message, bold(row.operation), bold(self.operation)
+					),
+					OperationSequenceError,
+				)
+				frappe.throw(
+					_("{0}, செயல்முறை {1} முடிந்த பிறகு செயல்முறை {2} செய்யவும்.").format(
+						message, bold(row.operation), bold(self.operation)
+					),
+					OperationSequenceError,
+				)
+
+			if row.completed_qty < current_operation_qty:
+				msg = f"""The completed quantity {bold(current_operation_qty)}
+					of an operation {bold(self.operation)} cannot be greater
+					than the completed quantity {bold(row.completed_qty)}
+					of a previous operation
+					{bold(row.operation)}.
+				"""
+
+				# frappe.throw(_(msg))
+
+	def add_time_log(self, args):
+		last_row = []
+		employees = args.employees
+		if isinstance(employees, str):
+			employees = json.loads(employees)
+
+		if self.time_logs and len(self.time_logs) > 0:
+			last_row = self.time_logs[-1]
+
+		self.reset_timer_value(args)
+		if last_row and args.get("complete_time"):
+			for row in self.time_logs:
+				if not row.to_time:
+					row.update(
+						{
+							"to_time": get_datetime(args.get("complete_time")),
+							"operation": args.get("sub_operation"),
+							"completed_qty": args.get("completed_qty") or 0.0,
+                            
+						}
+					)
+		elif args.get("start_time"):
+			new_args = frappe._dict(
+				{
+					"from_time": get_datetime(args.get("start_time")),
+					"operation": args.get("sub_operation"),
+					"completed_qty": 0.0,
+                    
+				}
+			)
+
+			if employees:
+				for name in employees:
+					new_args.employee = name.get("employee")
+					self.add_start_time_log(new_args)
+			else:
+				self.add_start_time_log(new_args)
+
+		if not self.employee and employees:
+			self.set_employees(employees)
+
+		if self.status == "On Hold":
+			self.current_time = time_diff_in_seconds(last_row.to_time, last_row.from_time)
+
+		self.save()
+				
+
+class CustomStockEntry(StockEntry):
+	def set_process_loss_qty(self):
+		if self.purpose not in ("Manufacture", "Repack"):
+			return
+		
+		if self.disable_auto_set_process_loss_qty:
+			return
+
+		precision = self.precision("process_loss_qty")
+		if self.work_order:
+			data = frappe.get_all(
+				"Work Order Operation",
+				filters={"parent": self.work_order},
+				fields=["max(process_loss_qty) as process_loss_qty"],
+			)
+
+			if data and data[0].process_loss_qty is not None:
+				process_loss_qty = data[0].process_loss_qty
+				if flt(self.process_loss_qty, precision) != flt(process_loss_qty, precision):
+					self.process_loss_qty = flt(process_loss_qty, precision)
+
+					frappe.msgprint(
+						_("The Process Loss Qty has reset as per job cards Process Loss Qty"), alert=True
+					)
+
+		if not self.process_loss_percentage and not self.process_loss_qty:
+			self.process_loss_percentage = frappe.get_cached_value(
+				"BOM", self.bom_no, "process_loss_percentage"
+			)
+
+		if self.process_loss_percentage and not self.process_loss_qty:
+			self.process_loss_qty = flt(
+				(flt(self.fg_completed_qty) * flt(self.process_loss_percentage)) / 100
+			)
+		elif self.process_loss_qty and not self.process_loss_percentage:
+			self.process_loss_percentage = flt(
+				(flt(self.process_loss_qty) / flt(self.fg_completed_qty)) * 100
+			)
+
+class CustomProductionPlan(ProductionPlan):
+
+	def make_work_order(self):
+		from erpnext.manufacturing.doctype.work_order.work_order import get_default_warehouse
+
+		wo_list, po_list = [], []
+		subcontracted_po = {}
+		default_warehouses = get_default_warehouse()
+
+		self.make_work_order_for_finished_goods(wo_list, default_warehouses)
+		self.make_work_order_for_subassembly_items(wo_list, subcontracted_po, default_warehouses)
+		self.make_subcontracted_purchase_order(subcontracted_po, po_list)
+		self.show_list_created_message("Work Order", wo_list)
+		self.show_list_created_message("Purchase Order", po_list)
+
+		if not wo_list:
+			frappe.msgprint(_("No Work Orders were created"))
+
+	# ----------------- Consolidation Helper -----------------
+	def consolidate_items(self, items, keys=None):
+		"""Consolidate items list into grouped dicts by given keys"""
+		from collections import defaultdict
+		if not keys:
+			keys = ["production_item", "bom_no", "fg_warehouse", "schedule_date"]
+
+		consolidated = defaultdict(lambda: defaultdict(float))
+		details_map = {}
+
+		for item in items:
+			key = tuple(item.get(k) for k in keys)
+
+			# consolidate qty
+			consolidated[key]["qty"] += flt(item.get("qty"))
+
+			# keep other fields from first record
+			if key not in details_map:
+				details_map[key] = item.copy()
+
+		# merge back
+		result = []
+		for key, qty_data in consolidated.items():
+			row = details_map[key]
+			row["qty"] = qty_data["qty"]
+			result.append(row)
+
+		return result
+
+	# ----------------- Finished Goods -----------------
+	def make_work_order_for_finished_goods(self, wo_list, default_warehouses):
+		items_data = self.get_production_items()
+
+		# Consolidate items before creating Work Orders
+		consolidated_items = self.consolidate_items(list(items_data.values()))
+
+		for item in consolidated_items:
+			if self.sub_assembly_items:
+				item["use_multi_level_bom"] = 0
+
+			set_default_warehouses(item, default_warehouses)
+			work_order = self.create_work_order(item)
+			if work_order:
+				wo_list.append(work_order)
+
+	# ----------------- Sub Assembly Items -----------------
+	def make_work_order_for_subassembly_items(self, wo_list, subcontracted_po, default_warehouses):
+		# separate subcontract/material request rows
+		subcontract_rows = []
+		normal_rows = []
+		for row in self.sub_assembly_items:
+			if row.type_of_manufacturing == "Subcontract":
+				subcontracted_po.setdefault(row.supplier, []).append(row)
+				continue
+			if row.type_of_manufacturing == "Material Request":
+				continue
+			normal_rows.append(row.as_dict())
+
+		# Consolidate sub-assembly rows
+		consolidated_rows = self.consolidate_items(
+			normal_rows,
+			keys=["production_item", "bom_no", "fg_warehouse", "schedule_date"]
+		)
+
+		for row in consolidated_rows:
+			work_order_data = {
+				"wip_warehouse": default_warehouses.get("wip_warehouse"),
+				"fg_warehouse": default_warehouses.get("fg_warehouse"),
+				"company": self.get("company"),
+			}
+			self.prepare_data_for_sub_assembly_items(row, work_order_data)
+			work_order = self.create_work_order(work_order_data)
+			if work_order:
+				wo_list.append(work_order)
+
+	def prepare_data_for_sub_assembly_items(self, row, wo_data):
+		for field in [
+			"production_item",
+			"item_name",
+			"qty",
+			"fg_warehouse",
+			"description",
+			"bom_no",
+			"stock_uom",
+			"bom_level",
+			"schedule_date",
+		]:
+			if row.get(field):
+				wo_data[field] = row.get(field)
+
+		wo_data.update(
+			{
+				"use_multi_level_bom": 0,
+				"production_plan": self.name,
+				"production_plan_sub_assembly_item": row.get("name"),
+			}
+		)
+	
+			
+def parse_datetime_safe(value):
+    if isinstance(value, datetime.datetime):
+        return value
+    if isinstance(value, str):
+        # Try ISO/MySQL format first
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M:%S"):
+            try:
+                return datetime.datetime.strptime(value, fmt)
+            except ValueError:
+                continue
+    raise ValueError(f"Unrecognized datetime format: {value}")
+		
+def set_default_warehouses(row, default_warehouses):
+	for field in ["wip_warehouse", "fg_warehouse"]:
+		if not row.get(field):
+			row[field] = default_warehouses.get(field)

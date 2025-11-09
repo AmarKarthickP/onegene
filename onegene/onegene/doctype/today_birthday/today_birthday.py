@@ -32,7 +32,7 @@ def birthday_list():
         emp_dob = employee.date_of_birth
         if emp_dob:
             if emp_dob.month == today_date.month and emp_dob.day == today_date.day:
-                image=frappe.db.get_value("File",{"attached_to_name": employee.name, "attached_to_doctype": 'Employee'},["file_url"])
+                image=frappe.db.get_value("File",{"attached_to_name": employee.name, "attached_to_doctype": 'Employee',"attached_to_field": 'image'},["file_url"])
                 has_birthday = True
                 if image:
                     row = '<table>'

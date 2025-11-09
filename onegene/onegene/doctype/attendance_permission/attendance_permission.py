@@ -21,6 +21,14 @@ from datetime import datetime, timedelta
 
 
 class AttendancePermission(Document):
+	def on_trash(self):
+		if "System Manager" not in frappe.get_roles(frappe.session.user):
+			if self.workflow_state and self.workflow_state not in ["Draft", "Cancelled"]:
+				if self.docstatus == 0:
+					frappe.throw(
+						"Cannot delete this document as the workflow has moved to the next level.",
+						title="Not Permitted"
+					)
 	def after_insert(self):
 		first_day = get_first_day(self.permission_date)
 		last_day = get_last_day(self.permission_date)
@@ -42,7 +50,7 @@ class AttendancePermission(Document):
 		else:
 			if total_hours > 2:
 				frappe.throw(_("Only 2 hours Permission applicable for the month"))
-	def validate(self):
+	def validate(self):		
 		first_day = get_first_day(self.permission_date)
 		last_day = get_last_day(self.permission_date)
 		
@@ -77,6 +85,14 @@ class AttendancePermission(Document):
 			# 	frappe.throw(_("Permission is not applicable. OUT time not found. Kindly use Attendance Regularize"))
 		
 	def on_submit(self):
+		user = frappe.session.user
+		if user == self.owner:
+			if "System Manager" not in frappe.get_roles(user):
+				frappe.throw(
+					_("You cannot approve your own attendance permission request. Please contact your manager for approval."),
+					title=_("Not Permitted")
+				)
+
 		if self.workflow_state=='Approved':
 			attendance = frappe.get_doc('Attendance', {
 			'employee': self.employee,
@@ -110,7 +126,6 @@ class AttendancePermission(Document):
 							
 							time_format = "%H:%M:%S"
 							time_obj = datetime.strptime(time_string, time_format)
-							frappe.errprint(time_obj)
 							new_time_obj = time_obj - timedelta(hours=2)
 							new_time_str = new_time_obj.strftime(time_format)
 							frappe.db.set_value('Attendance',attendance.name,'late_entry',1)

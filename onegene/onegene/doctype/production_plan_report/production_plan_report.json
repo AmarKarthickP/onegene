@@ -108,12 +108,14 @@
   {
    "fieldname": "today_balance",
    "fieldtype": "Int",
-   "label": "Today Balance"
+   "label": "Today Balance",
+   "read_only": 1
   },
   {
    "fieldname": "required_plan",
    "fieldtype": "Int",
-   "label": "Required Plan"
+   "label": "Required Plan",
+   "read_only": 1
   },
   {
    "fieldname": "pro_as_on_yes",
@@ -130,17 +132,20 @@
   {
    "fieldname": "tent_prod_plan_1",
    "fieldtype": "Int",
-   "label": "Tentative Production Plan 1"
+   "label": "Tentative Production Plan 1",
+   "read_only": 1
   },
   {
    "fieldname": "tent_prod_plan_2",
    "fieldtype": "Int",
-   "label": "Tentative Production Plan 2"
+   "label": "Tentative Production Plan 2",
+   "read_only": 1
   },
   {
    "fieldname": "today_prod_plan",
    "fieldtype": "Int",
-   "label": "Today Production Plan"
+   "label": "Today Production Plan",
+   "read_only": 1
   },
   {
    "fieldname": "rej_allowance",
@@ -183,7 +188,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-10-31 10:17:18.960591",
+ "modified": "2025-06-24 10:21:36.213111",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Production Plan Report",

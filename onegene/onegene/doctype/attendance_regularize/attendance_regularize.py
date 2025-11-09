@@ -19,6 +19,14 @@ from datetime import datetime, timedelta
 from onegene.mark_attendance import mark_att_from_frontend_with_employee
 
 class AttendanceRegularize(Document):
+	def on_trash(self):
+		if "System Manager" not in frappe.get_roles(frappe.session.user):
+			if self.workflow_state and self.workflow_state not in ["Draft", "Cancelled"]:
+				if self.docstatus == 0:
+					frappe.throw(
+						"Cannot delete this document as the workflow has moved to the next level.",
+						title="Not Permitted"
+					)
 	#It will update the Corrected In Time, Correcetd Out Time and Corrected Shift in the attendance of the employee and calculate the working hours
 	def on_submit(self):
 		if self.workflow_state=='Approved':

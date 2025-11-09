@@ -1,13 +1,15 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:name1",
+ "autoname": "field:box_no",
  "creation": "2025-05-28 11:08:38.586660",
  "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "name1",
+  "column_break_16xi",
+  "box_no",
   "dimensions_section",
   "length",
   "column_break_wucn",
@@ -102,11 +104,21 @@
    "label": "Weight UOM",
    "options": "UOM",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_16xi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "box_no",
+   "fieldtype": "Data",
+   "label": "Box No",
+   "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-28 11:08:38.586660",
+ "modified": "2025-06-09 17:17:13.536304",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Box",

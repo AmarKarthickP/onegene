@@ -26,22 +26,23 @@ def create_issue_from_support_ticket(support_ticket):
 
 @frappe.whitelist()
 #it will send a mail to TEAMPRO support mail
-def send_mail_to_support_team(name,subject, message, recipients, employee_mail_id, sender):
+def send_mail_to_support_team(subject, message, recipients,sender,priority=None):
     """
     Send an email to the specified recipients with the given subject and message.
     """
     if not frappe.db.exists("Email Account", {"email_id": sender}):
         frappe.throw(_("Sender email not configured in Email Account"))
-
+    priority_html = f"<p><strong>Priority:</strong> {priority}</p>" if priority else ""
     # Add additional content to the message body
     message_body = f"""
         <div style="font-family: 'Times New Roman', Times, serif; font-size: 14px;">
             <p>Dear Team,</p>
 
-            <p>A new Ticket: {name} has been raised by the User:{employee_mail_id} with the below mentioned Subject and Description</p>
+            <p>A new query has been raised with the below mentioned Subject and Description</p>
 
             <p><strong>Subject:</strong> {subject}</p>
             <p><strong>Description:</strong>{message}</p>
+            {priority_html}
 
 
             <p>Thanks & Regards,<br>

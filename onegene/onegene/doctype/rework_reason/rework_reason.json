@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:rework_reason",
  "creation": "2023-08-20 16:24:11.256336",
@@ -9,7 +10,9 @@
  "engine": "InnoDB",
  "field_order": [
   "rework_reason",
-  "remarks"
+  "remarks",
+  "issue_name",
+  "applicable_for"
  ],
  "fields": [
   {
@@ -24,11 +27,22 @@
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Remarks"
+  },
+  {
+   "fieldname": "applicable_for",
+   "fieldtype": "Table",
+   "label": "Applicable For",
+   "options": "Rework Reason Applicable"
+  },
+  {
+   "fieldname": "issue_name",
+   "fieldtype": "Data",
+   "label": "Issue Name"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-25 17:50:04.251791",
+ "modified": "2025-10-07 06:02:46.372771",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Rework Reason",
@@ -40,6 +54,7 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,
