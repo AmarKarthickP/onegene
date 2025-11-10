@@ -496,6 +496,10 @@ def enqueue_upload(month, to_date, file):
 			# Construct plan date
 			try:
 				plan_date = datetime.datetime.strptime(f"{col}-{year}", "%b-%d-%Y").date()
+    
+				today = datetime.date.today()
+				if plan_date.month < today.month:
+					plan_date = plan_date.replace(year=year + 1)
 				
 			except Exception:
 				frappe.errprint(f"Invalid date format in column {col}")

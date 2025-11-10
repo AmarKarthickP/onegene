@@ -783,10 +783,11 @@ def get_new_business_jo_html(doc):
 
 {% set label_width = "140px" %} <!-- adjust as needed -->
 
+{% set supplier_name=frappe.db.get_value("Supplier",{"name":doc.supplier},"supplier_name") %}
 
 <div style="margin-bottom: 4px;">
     <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Supplier Name</span>
-    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.supplier or 'NA' }}</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{supplier_name or 'NA' }}</span>
 </div>
 
 <div style="margin-bottom: 4px;">
@@ -1063,9 +1064,11 @@ def get_price_revision_jo_html(doc):
     <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Supplier Group</span>
     <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.supplier_group or 'NA' }}</span>
 </div>
+{% set supplier_name=frappe.db.get_value("Supplier",{"name":doc.supplier},"supplier_name") %}
+
 <div style="margin-bottom: 4px;">
     <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Supplier Name</span>
-    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.supplier or 'NA' }}</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ supplier_name or 'NA' }}</span>
 </div>
 
 <div style="margin-bottom: 4px;">

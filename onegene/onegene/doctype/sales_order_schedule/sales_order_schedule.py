@@ -541,7 +541,7 @@ def validate_in_process_on_revision(item_code, schedule_date, revised_qty, sched
 				)
 
 @frappe.whitelist()
-def get_schedule_summary_html(customer_code, sales_order, item_code):
+def get_schedule_summary_html(customer_code=None , sales_order=None, item_code=None):
 	sales_order_schedules = frappe.db.get_all(
 		"Sales Order Schedule",
 		{

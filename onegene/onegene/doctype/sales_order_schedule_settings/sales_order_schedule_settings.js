@@ -192,6 +192,7 @@ frappe.ui.form.on('Sales Order Schedule Settings', {
                         if (frappe.upload_dialog) {
                             frappe.upload_dialog.hide();
                             frappe.upload_dialog = null;
+                            
                         }
 
 
@@ -199,7 +200,11 @@ frappe.ui.form.on('Sales Order Schedule Settings', {
                             message: __('Uploaded Successfully'),
                             indicator: 'orange'
                         });
+                        
                         if (done) done();
+
+                        
+                        
                 }
             })
         } else {

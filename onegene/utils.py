@@ -598,9 +598,9 @@ def get_gate_items_geu(entry_document, entry_id):
             items.append({
                 "item_code": e.item_code,
                 "item_name": e.item_name,
-                "qty": e.qty,
-                "uom": e.dis_qty,
-                'box':e.no_of_bins,
+                "qty": e.dis_qty,
+                "uom": e.uom,
+                'box':int(e.no_of_bins) or 0,
                 
             })
     else:

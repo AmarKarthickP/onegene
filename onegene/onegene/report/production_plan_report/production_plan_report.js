@@ -173,20 +173,7 @@ frappe.query_reports["Production Plan Report"] = {
 							"fieldname":"month",
 							"label": __("Month"),
 							"fieldtype": "Select",
-							"options": [
-								'Jan',
-								'Feb',
-								'Mar',
-								'Apr',
-								'May',
-								'Jun',
-								'Jul',
-								'Aug',
-								'Sep',
-								'Oct',
-								'Nov',
-								'Dec',
-							],
+							"options": [],
 							"default": (function () {
 								const monthIndex = new Date().getMonth();
 								const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -256,6 +243,19 @@ frappe.query_reports["Production Plan Report"] = {
 				});
 				
 				d.show();
+
+
+				const currentMonthIndex = new Date().getMonth();
+				const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+				const nextMonthIndex = (currentMonthIndex + 1) % 12;
+
+				const availableMonths = [months[currentMonthIndex], months[nextMonthIndex]];
+
+				d.fields_dict.month.df.options = availableMonths;
+				d.fields_dict.month.refresh();
+
+
+
 				d.fields_dict.download.$wrapper.find('button').click(() => {
 					var dt = d.get_values();
 					const rows = frappe.query_report.data;

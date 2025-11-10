@@ -3,6 +3,7 @@
 
 frappe.ui.form.on('Purchase Order Schedule Settings', {
     refresh(frm) {
+        
         frm.fields_dict.response.$wrapper.html(frm.doc.response_data);
 
         frm.fields_dict.html_1.$wrapper.html(`
@@ -188,11 +189,15 @@ frappe.ui.form.on('Purchase Order Schedule Settings', {
             }).then((r) => {
                 let result = r.message;
                 if (result) {
+                    frm.set_value('attach', null);
+                    
+                    
                     // frappe.msgprint({
                     //     message: __('Uploaded Successfully'),
                     //     indicator: 'orange'
                     // });
                     if (done) done();
+                    
                 }
             })
         } else {

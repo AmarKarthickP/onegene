@@ -212,6 +212,33 @@ scheduler_events = {
 	],
 }
 
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["module", "=", "ONEGENE"]
+        ]
+    },
+    {
+        "dt": "Client Script",
+        "filters": [
+            ["module", "=", "ONEGENE"]
+        ]
+    },
+    {
+        "dt": "Server Script",
+        "filters": [
+            ["module", "=", "ONEGENE"]
+        ]
+    },
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["module", "=", "ONEGENE"]
+        ]
+    }
+]
+
 # Testing
 # -------
 

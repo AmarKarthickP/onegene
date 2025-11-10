@@ -555,7 +555,7 @@ def calculate_inr_values_and_db_set(doc):
 
 
 @frappe.whitelist()
-def get_schedule_summary_html(supplier_code, purchase_order, item_code):
+def get_schedule_summary_html(supplier_code=None, purchase_order=None, item_code=None):
 	purchase_order_schedules = frappe.db.get_all(
 		"Purchase Order Schedule",
 		{
