@@ -48,9 +48,11 @@ def enqueue_upload(file):
 	records=pps
 	if len(pps) < 20:
 		precheck_purchase_order_upload_without_enqueue(records,file[0],pps,job_id)
+		frappe.db.set_single_value('Purchase Order Schedule Settings', 'attach', None)
 		return _process_upload(file=file[0], records=pps)
 	elif len(pps) <= 500:
 		precheck_purchase_order_upload(records,file[0],pps,job_id)
+		frappe.db.set_single_value('Purchase Order Schedule Settings', 'attach', None)
 		frappe.msgprint(_("Upload is being processed in background..."), alert=True)
 		
 	else:

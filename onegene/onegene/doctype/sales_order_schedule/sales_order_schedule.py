@@ -607,8 +607,8 @@ def indian_format(n):
 @frappe.whitelist()
 def currency_exchange_rate_list(month):
 	data = frappe.db.sql("""
-						SELECT DISTINCT currency, exchange_rate FROM `tabSales Order Schedule` WHERE schedule_month = %s order by currency asc;
-						 """,(month), as_dict = 1)
+						SELECT  currency, exchange_rate FROM `tabCurrency Conversion`  order by currency asc;
+						 """, as_dict = 1)
 	return data
 
 @frappe.whitelist()

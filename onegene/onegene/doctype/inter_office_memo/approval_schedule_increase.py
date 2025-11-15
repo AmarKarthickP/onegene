@@ -1504,11 +1504,6 @@ def get_schedule_revise_delivery_html(doc):
         </td>
     </tr>
 </table><br>
-{% if doc.total_sales_plan %}
-    <b>Total Sales Plan: </b>{{ "₹{:,.2f}".format(doc.total_sales_plan or 0) }}<br>
-    {% endif %}
-
-        <br>
         {% set name=frappe.db.get_value("Employee",{"user_id":doc.owner},"employee_name") %}
     <table>
   <tr>

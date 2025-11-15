@@ -86,7 +86,8 @@ frappe.ui.form.on("Purchase Order Schedule", {
     refresh(frm) {
         toggle_qty_read_only(frm);
         if (frm.doc.docstatus == 1) {
-            if ((frappe.user.has_role("System Manager") || frappe.user.has_role("Purchase Manager") || frappe.user.has_role("Purchase Engineer")) && frm.doc.order_type == "Open") {
+            // if ((frappe.user.has_role("System Manager") || frappe.user.has_role("Purchase Manager") || frappe.user.has_role("Purchase Engineer")) && frm.doc.order_type == "Open") {
+            if (frappe.user.has_role("System Manager")) {
                 toggle_revise_button(frm);
             }
         }

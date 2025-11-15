@@ -48,9 +48,11 @@ def enqueue_upload(file):
 
 	if len(pps) < 20:
 		precheck_records_without_enqueue(file[0],pps,job_id )
+		frappe.db.set_single_value('Sales Order Schedule Settings', 'attach', None)
 		return _process_upload(file=file[0], records=pps)
 	elif len(pps) <= 500:
 		precheck_records(file[0],pps,job_id )
+		frappe.db.set_single_value('Sales Order Schedule Settings', 'attach', None)
 		
 	else:
 		frappe.throw(_("Upload supports only up to 500 rows"), title=_("Too Many Rows"))
@@ -114,6 +116,7 @@ def _process_upload(file, records):
 				}):
 					doc = frappe.new_doc('Sales Order Schedule')
 					doc.customer_code = cust_no
+					doc.customer_name = frappe.db.get_value("Customer", {"customer_code": cust_no}, "name")
 					doc.sales_order_number = so_number
 					doc.item_code = item
 					doc.schedule_date = schedule_date

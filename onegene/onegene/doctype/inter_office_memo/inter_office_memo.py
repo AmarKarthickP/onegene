@@ -894,6 +894,9 @@ class InterOfficeMemo(Document):
                 self.plant_head_approved_on=now_datetime()
                 self.plant_head="k.selvaraja@onegeneindia.in"
         if self.iom_type=="Approval for Schedule Revised" and self.department_from=="Delivery - WAIP":
+            current_month = frappe.utils.now_datetime().strftime("%b").upper()
+            if frappe.db.exists("Inter Office Memo",{"iom_type": "Approval for Schedule Revised","department_from": "Delivery - WAIP","schedule_month": self.schedule_month,"workflow_state": ["not in", ["Approved","Rejected"]]}):
+                frappe.throw("Not allowed to create a new document. Previous document is not approved.")
             total_current_schedule_value = 0
             if self.schedule_month and self.approval_schdule_increase:
                 current_schedule = 0
@@ -1280,7 +1283,28 @@ class InterOfficeMemo(Document):
                 self.bmd_approved_on=now_datetime()
             if self.has_value_changed("workflow_state") and self.workflow_state == "Approved":
                 self.cmd_approved_on=now_datetime()
-        if (self.iom_type=="Approval for Tooling Invoice" or self.iom_type=="Approval for Price Revision PO" or self.iom_type=="Approval for New Business PO") and self.department_from=="Marketing - WAIP" or (self.iom_type=="Approval for Tools & Dies Invoice" and self.department_from=="M P L & Purchase - WAIP" ):
+        if (self.iom_type=="Approval for Tools & Dies Invoice" and self.department_from=="M P L & Purchase - WAIP" ):
+            if self.has_value_changed("workflow_state") and self.workflow_state == "Pending for ERP Team":
+                self.hod_approved_on=now_datetime()
+            if self.has_value_changed("workflow_state") and self.workflow_state == "Pending for Marketing Manager":
+                self.erp_team_approved_on=now_datetime()
+                self.erp_team=frappe.session.user
+            if self.has_value_changed("workflow_state") and self.workflow_state == "Pending for Plant Head":
+                self.marketing_manager=frappe.session.user
+                self.marketing_manager_approved_on=now_datetime()
+            if self.has_value_changed("workflow_state") and self.workflow_state == "Pending for GM":
+                self.plant_head_approved_on=now_datetime()
+                self.plant_head="k.selvaraja@onegeneindia.in"
+            if self.has_value_changed("workflow_state") and self.workflow_state == "Pending for Finance":
+                self.gm_approved_on=now_datetime()
+            if self.has_value_changed("workflow_state") and self.workflow_state == "Pending for BMD":
+                self.finance_approved_on=now_datetime()
+                self.finance=frappe.session.user
+            if self.has_value_changed("workflow_state") and self.workflow_state == "Pending for CMD":
+                self.bmd_approved_on=now_datetime()
+            if self.has_value_changed("workflow_state") and self.workflow_state == "Approved":
+                self.cmd_approved_on=now_datetime()
+        if (self.iom_type=="Approval for Tooling Invoice" or self.iom_type=="Approval for Price Revision PO" or self.iom_type=="Approval for New Business PO") and self.department_from=="Marketing - WAIP":
             if self.has_value_changed("workflow_state") and self.workflow_state == "Pending for ERP Team":
                 self.hod_approved_on=now_datetime()
             if self.has_value_changed("workflow_state") and self.workflow_state == "Pending for Plant Head":
@@ -1627,8 +1651,8 @@ class InterOfficeMemo(Document):
                     schedule = frappe.db.sql("""
                         SELECT SUM(schedule_amount_inr) AS schedule_amount_inr
                         FROM `tabSales Order Schedule`
-                        WHERE customer_code = %s AND docstatus = 1
-                    """, (customer_code,), as_dict=True)
+                        WHERE customer_code = %s AND docstatus = 1 AND schedule_month=%s
+                    """, (customer_code,self.schedule_month,), as_dict=True)
 
                     current_schedule_value = (schedule[0].get("schedule_amount_inr") 
                                             if schedule else 0) or 0
@@ -1648,8 +1672,8 @@ class InterOfficeMemo(Document):
                     schedule = frappe.db.sql("""
                         SELECT SUM(schedule_amount_inr) AS schedule_amount_inr
                         FROM `tabSales Order Schedule`
-                        WHERE item_group = %s AND docstatus = 1
-                    """, (item_group,), as_dict=True)
+                        WHERE item_group = %s AND docstatus = 1 AND schedule_month=%s
+                    """, (item_group,self.schedule_month,), as_dict=True)
 
                     current_schedule_value = (schedule[0].get("schedule_amount_inr") 
                                             if schedule else 0) or 0
@@ -1686,8 +1710,8 @@ class InterOfficeMemo(Document):
                     schedule = frappe.db.sql("""
                         SELECT SUM(schedule_amount_inr) AS schedule_amount_inr
                         FROM `tabPurchase Order Schedule`
-                        WHERE supplier_code = %s AND docstatus = 1
-                    """, (supplier_code,), as_dict=True)
+                        WHERE supplier_code = %s AND docstatus = 1 AND schedule_month=%s
+                    """, (supplier_code,self.schedule_month,), as_dict=True)
 
                     current_schedule_value = (schedule[0].get("schedule_amount_inr") 
                                             if schedule else 0) or 0
@@ -1707,8 +1731,8 @@ class InterOfficeMemo(Document):
                     schedule = frappe.db.sql("""
                         SELECT SUM(schedule_amount_inr) AS schedule_amount_inr
                         FROM `tabPurchase Order Schedule`
-                        WHERE item_group = %s AND docstatus = 1
-                    """, (item_group,), as_dict=True)
+                        WHERE item_group = %s AND docstatus = 1 AND schedule_month=%s
+                    """, (item_group,self.schedule_month,), as_dict=True)
 
                     current_schedule_value = (schedule[0].get("schedule_amount_inr") 
                                             if schedule else 0) or 0
@@ -2638,13 +2662,33 @@ def get_po_schedule_qty_amount(purchase_order, item_code, schedule_month):
         ["qty" , "schedule_amount","order_rate"],  
         as_dict=True
     )
+    results = frappe.db.get_value(
+        "Purchase Order Item",
+        {"parent": purchase_order, "item_code": item_code},
+        ["rate"],
+        as_dict=True
+    )
     if result:
         return {
-            "qty":result.qty,
-            "schedule_amount":result.schedule_amount,
-            "order_rate":result.order_rate
+            "qty": result.qty or 0,
+            "schedule_amount": result.schedule_amount or 0,
+            "order_rate": result.order_rate or (results.rate if results else 0)
         }
-    return {"qty":0,"schedule_amount": 0,"order_rate":0}
+
+    if results:
+        return {
+            "qty": 0,
+            "schedule_amount": 0,
+            "order_rate": results.rate or 0
+        }
+
+    # if result:
+    #     return {
+    #         "qty":result.qty,
+    #         "schedule_amount":result.schedule_amount,
+    #         "order_rate":result.order_rate
+    #     }
+    # return {"qty":0,"schedule_amount": 0,"order_rate":0}
 
 @frappe.whitelist()
 def get_po_schedule_qty(purchase_order, item_code):
@@ -2721,6 +2765,7 @@ def get_tools_and_dies_invoice(doc):
             "Draft",
             "Pending For HOD",
             "Pending for ERP Team",
+            "Pending for Marketing Manager",
             "Pending for Plant Head",
             "Pending for GM",
             "Pending for Finance",
@@ -2749,118 +2794,100 @@ def get_tools_and_dies_invoice(doc):
     gm_signature = frappe.db.get_value("Employee", {"name":"KR002"}, "custom_digital_signature")
     mm_signature = frappe.db.get_value("Employee", {"user_id": doc.get("marketing_manager")}, "custom_digital_signature")
     template = """
-    
-    <style>
-    .tab1{
-    
-    width:100%;
-      
-}
-
-.bd{
-    border:1px solid black;
-}
-
-td, th {  padding: 4px; }
-
-.iom-wrapper {
+     <style>
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border: 1px solid black; padding: 4px; }
+    .header-title { font-size: 18px; font-weight: bold; }
+    .iom-wrapper {
         border: 2px solid black;
         padding: 15px;
         margin: 5px;
         border-radius: 8px;
     }
-</style>
-
-<div class="iom-wrapper">
-
-{% set total_items = doc.approval_tools_and_dies_invoice |length %}
-{% for i in range(0, total_items, 15) %}
-    {% set batch = doc.approval_tools_and_dies_invoice[i:i+15] %}
-    
-    {% if i > 0 %}
-        <div style="page-break-before: always;"></div>
-    {% endif %}
+    </style>
 
 
-<table class="tab1">
-    <tr style=" border:1px solid black; " >
-        <td colspan="1" style="border:1px solid black; text-align:center; padding: 4px;" >
-           <div style="padding-top:8px;">
-            <img src="/files/ci_img.png" alt="Logo" style="width:150px;">
-            </div>
-        </td>
-        <td colspan="5" style=" border:1px solid black; text-align:center; padding: 4px;" >
-            <div style="font-size:20px; font-weight:bold; padding-top:8px ">INTER OFFICE MEMO (I O M)</div>
-        </td>
-        
-        <td colspan="2" style="border:1px solid black; text-align:center; padding: 4px;" >
-             <div style="padding-top:10px;border-bottom:none;">
-        <span style="border: 2px solid black; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 5px;">
-            ✔
-        </span>
-        {{ doc.priority }}
-    </div>
-            
-        </td>
-    </tr>
-    {% set emp_name=frappe.db.get_value("Employee",{"user_id":doc.owner},"employee_name") %}
-    <tr style="border-right:1px solid black; border-left:1px solid black; " >
-        <td colspan="4">Dept . From&nbsp;&nbsp;&nbsp;:&nbsp;{{doc.department_from or ""}}</td>
-        {% set formatted_date = frappe.utils.format_datetime(doc.date_time, "dd-MM-yyyy HH:mm:ss") %}
-        <td colspan="4" style="border-right:1px solid black;">Date & Time&nbsp;:&nbsp;{{formatted_date or ""}}</td>
-    </tr>
-    <tr style="border-right:1px solid black; border-left:1px solid black; " >
-        <td colspan="4">
-            Dept. To&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{{doc.department_to or ""}}
-        </td>
-        <td colspan="4" style="border-right:1px solid black;">
-            Doc .No&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{{doc.name or ""}}
-        </td>
-    </tr>
-    
-    <tr style="border-right:1px solid black; border-left:1px solid black; " >
-        
-        <td colspan="4" >
-            Created By&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;{{emp_name or '' }}
-        </td>
-        <td colspan="4" style="border-right:1px solid black;">
-            Instructed By&nbsp;&nbsp;:&nbsp;{{doc.employee_name or ""}}
-        </td>
-    </tr>
-    
-    
-    <tr style="border: 1px solid black;" >
-        <td colspan="1">
-            SUBJECT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:
-        </td>
-        <td colspan="7" style="border-right:1px solid black; font-weight:bold; text-align:center;" >
-            {{doc.iom_type or ""}}
-        </td>
-    </tr>
-    
+    <div class="iom-wrapper">
+        <table >
     <tr>
-        <td colspan="1">Supplier Group</td>
-        <td colspan="7" >:&nbsp;{{doc.supplier_group or ""}}</td>
+        <td style="width: 15%;text-align:center;border-right:hidden;border-bottom:none"><div style="padding-top:8px;border-bottom:none"><img src="/files/ci_img.png" alt="Logo" style="max-width: 60%;"></div></td>
+        <td style="width:30%;font-size:20px;text-align:center;border-right:hidden;border-bottom:none" class="header-title" nowrap><div style="padding-top:10px;">INTER OFFICE MEMO (I O M)</div></td>
+    <td style="width:15%;white-space:nowrap;border-bottom:none;font-weight:bold;">
+        <div style="padding-top:13px;border-bottom:none;">
+            <span style="border: 2px solid black; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 5px;">
+                ✔
+            </span>
+            {{ doc.priority }}
+        </div>
+    </td>
+
+
     </tr>
+    
+   
+    </table>
+    {% set emp_name=frappe.db.get_value("Employee",{"user_id":doc.owner},"employee_name") %}
+
+    <table style="width:100%; border-collapse: collapse; margin-top:-1px;">
+        <tr>
+        <td style="width:50%; border:1px solid black; vertical-align:top; padding:5px; border-bottom:none;border-right:none;">
+            <p style="line-height:1.1">
+        <span style="display:inline-block; width:100px;">Dept.From </span>:&nbsp;{{ doc.department_from or '' }}<br><br>
+        <span style="display:inline-block; width:100px;">Dept.To </span>:&nbsp;{{ doc.department_to or '' }}<br><br>
+
+        <span style="display:inline-block; width:100px;">Created By</span>: &nbsp;{{emp_name or '' }}<br><br>
+    
+    </p>
+
+       </td>
+       <td style="width:50%; border:1px solid black; vertical-align:top; padding:5px; border-bottom:none;border-left:none;">
+           <p style="line-height:1.1">
+            <span style="display:inline-block; width:90px;">Date & Time</span>: {{ frappe.utils.format_datetime(doc.date_time, "dd-MM-yyyy HH:mm:ss") or '' }}<br><br>
+    <span style="display:inline-block; width:90px;">Doc.No</span>: {{ doc.name }}<br><br>
+        <span style="display:inline-block; width:90px;white-space:nowrap">Requested By&nbsp</span>: &nbsp;{{ doc.employee_name or '' }}<br><br>
+
+       </p></td>
+   </tr>
+    
+</table>
+<table style="margin-top:-30px; width: 100%;">
+    <tr>
+        <td colspan="6" style="font-weight:bold;font-size:17px;border-right:hidden;">
+            SUBJECT&nbsp;&nbsp;&nbsp;:&nbsp;&nbsp;
+            <span style="display: inline-block; width: 70%; text-align: center;">
+                {{ doc.iom_type or 'NA' }}
+            </span>
+        </td>
+    </tr>
+
+</table>
+
+        <br>
+     {% set label_width = "140px" %} <!-- adjust as needed -->
+
+   <div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Supplier Group</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.supplier_group or 'NA' }}</span>
+</div>
     {% set supplier_name=frappe.db.get_value("Supplier",{"name":doc.supplier},"supplier_name") %}
 
-    <tr>
-        <td colspan="1">Supplier Name</td>
-        <td colspan="7" >:&nbsp;{{supplier_name or ""}}</td>
-    </tr>
-    <tr>
-        <td colspan="1">Currency</td>
-        <td colspan="7" >:&nbsp;{{doc.currency or ""}}</td>
-    </tr>
-    <tr>
-        <td colspan="1" style="white-space:nowrap;">Quotation No & Date</td>
-        <td colspan="7" >:&nbsp;{{doc.approval_tools_and_dies_invoice[0].quotation_no_new or ""}}&nbsp;&nbsp;&nbsp;{{frappe.format(doc.approval_tools_and_dies_invoice[0].quotation_date,{"fieldtype":"Date"}) or ""  }}</td>
-    </tr>
-    <tr>
-        <td colspan="1">HSN Code</td>
-        <td colspan="7" >:&nbsp;{{doc.approval_tools_and_dies_invoice[0].hsn_code or ""}}</td>
-    </tr>
-    {% if doc.supplier_group!="Importer" %}
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Supplier Name</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ supplier_name or 'NA' }}</span>
+</div>
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Currency</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.currency or 'NA' }}</span>
+</div>
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Quotation No & Date</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{doc.approval_tools_and_dies_invoice[0].quotation_no_new or ""}}/&nbsp;{{frappe.format(doc.approval_tools_and_dies_invoice[0].quotation_date,{"fieldtype":"Date"}) or ""  }}</span>
+</div>
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">HSN Code</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{doc.approval_tools_and_dies_invoice[0].hsn_code or ""}}</span>
+</div>
+{% if doc.supplier_group!="Importer" %}
    {% set ns = namespace(gst_rates=[]) %}  
 {% if doc.taxes %}
     {% for t in doc.taxes %}
@@ -2868,87 +2895,65 @@ td, th {  padding: 4px; }
             {% set ns.gst_rates = ns.gst_rates + [t.rate|string + '%'] %}
         {% endif %}
     {% endfor %}
-        <tr>
-
-<td colspan="1">GST Rate</td>
-        <td colspan="7" >:&nbsp;{{ ns.gst_rates | join(' + ') or '' }}</td>
-</tr>
+    <div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">GST Rate</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ ns.gst_rates | join(' + ') or '' }}</span>
+</div>
 {% endif %}
-    
+    {% endif %}
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Reason For Update</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.subject or 'NA' }}</span>
+</div>
+        <br>
+   <table style="width:100%;border-collapse:collapse;" border="1">
     <tr>
-        <td colspan="1" style="white-space:nowrap;">Reason For Update</td>
-        <td colspan="7" >:&nbsp;{{ doc.approval_tools_and_dies_invoice[0].reason_for_request if doc.approval_tools_and_dies_invoice and doc.approval_tools_and_dies_invoice[0].reason_for_request else 'NA' }}</td>
-    </tr>
-    
-    <tr>
-        <td colspan="1" style="background-color:#fec76f; border:1px solid black; text-align:center;">SI No</td>
-        <td colspan="2" style="background-color:#fec76f; border:1px solid black; text-align:center;">Tool Code</td>
-        <td colspan="2" style="background-color:#fec76f; border:1px solid black; text-align:center;">Tool Name</td>
-        <td colspan="1" style="background-color:#fec76f; border:1px solid black; text-align:center;">Qty</td>
-        <td colspan="1" style="background-color:#fec76f; border:1px solid black; text-align:center;">PO Price</td>
-        <td colspan="1" style="background-color:#fec76f; border:1px solid black; text-align:center;">Cost</td>
+        <td style="background-color:#fec76f; border:1px solid black; text-align:center;">SI No</td>
+        <td style="background-color:#fec76f; border:1px solid black; text-align:center;">Tool Code</td>
+        <td style="background-color:#fec76f; border:1px solid black; text-align:center;">Tool Name</td>
+        <td style="background-color:#fec76f; border:1px solid black; text-align:center;">Qty</td>
+        <td style="background-color:#fec76f; border:1px solid black; text-align:center;">PO Price</td>
+        <td style="background-color:#fec76f; border:1px solid black; text-align:center;">Cost</td>
     </tr>
     {% for i in doc.approval_tools_and_dies_invoice %}
     <tr>
-        <td colspan="1" style="border:1px solid black; text-align:center;">{{i.idx}}</td>
-        <td colspan="2" style="border:1px solid black; text-align:center;">{{i.part_no or ""}}</td>
-        <td colspan="2" style="border:1px solid black; text-align:center;">{{i.part_name or ""}}</td>
-        <td colspan="1" style="border:1px solid black; text-align:right;">{{i.qty or ""}}</td>
-        <td colspan="1" style="border:1px solid black; text-align:right;">{{frappe.utils.fmt_money(i.quotation_price or 0 , currency=doc.currency)}}</td>
-        <td colspan="1" style="border:1px solid black; text-align:right;">{{frappe.utils.fmt_money(i.tool_cost or 0 , currency=doc.currency)}}</td>
+        <td style="border:1px solid black; text-align:left;">{{i.idx}}</td>
+        <td style="border:1px solid black; text-align:left;">{{i.part_no or ""}}</td>
+        <td style="border:1px solid black; text-align:left;">{{i.part_name or ""}}</td>
+        <td style="border:1px solid black; text-align:center;">{{i.qty or ""}}</td>
+        <td style="border:1px solid black; text-align:right;">{{frappe.utils.fmt_money(i.quotation_price or 0 , currency=doc.currency)}}</td>
+        <td style="border:1px solid black; text-align:right;">{{frappe.utils.fmt_money(i.tool_cost or 0 , currency=doc.currency)}}</td>
     </tr>
     {% endfor %}
-    
-    
-    
     <tr>
-        <td colspan="7" style="border:1px solid black; text-align:center;" ><b>Total Tool Cost</b></td>
-        <td colspan="1" style="border:1px solid black; text-align:right;">{{frappe.utils.fmt_money(doc.total_tool_cost or 0 , currency=doc.currency)}}</td>
+        <td colspan="5" style="border:1px solid black; text-align:center;" ><b>Total Tool Cost</b></td>
+        <td colspan="1" style="border:1px solid black; text-align:right;font-weight:bold">{{frappe.utils.fmt_money(doc.total_tool_cost or 0 , currency=doc.currency)}}</td>
     </tr>
-    <tr>
-        <td colspan="8"></td>
-    </tr>
-    <tr>
-        <td colspan="8"></td>
-    </tr>
-    
-    <tr>
-        <td colspan="8" ><u>TERMS & CONDITIONS</u></td>
-    </tr>
-    <tr>
-        <td colspan="1" >Payment Terms</td>
-        <td colspan="7" >:&nbsp;{{doc.payment_terms or "" }}</td>
-    </tr>
-    <tr>
-        <td colspan="1">
-            Incoterms
-        </td>
-        
-        <td colspan="7" >
-           :&nbsp; {{doc.wonjin_incoterms or ""}}
-        </td>
-    </tr>
-    <tr>
-        <td colspan="1">
-            Remarks
-        </td>
-        <td colspan="7" >
-            :&nbsp; {{doc.subject or ""}}
-        </td>
-    </tr>
-    <tr>
-    
-     
+</table>
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;white-space:nowrap"><u>TERMS & CONDITIONS</u></span>
+</div>
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Payment Terms</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.payment_terms or 'NA' }}</span>
+</div>
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Incoterms</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.wonjin_incoterms or 'NA' }}</span>
+</div>
+
+     <table>
     
     <tr >
-        <td colspan="1" style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:12.5%;background-color:#a5a3ac;">Prepared</td>
-        <td colspan="1" style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:12.5%;background-color:#a5a3ac; ">HOD</td>
-        <td colspan="1" style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:12.5%;background-color:#a5a3ac; ">ERP Team</td>
-        <td colspan="1" style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:12.5%;background-color:#a5a3ac; ">Plant Head</td>
-        <td colspan="1" style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:12.5%;background-color:#a5a3ac; ">GM</td>
-        <td colspan="1" style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:12.5%;background-color:#a5a3ac; ">Finance</td>
-        <td colspan="1" style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:12.5%;background-color:#a5a3ac; ">BMD</td>
-        <td colspan="1" style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:12.5%;background-color:#a5a3ac; ">CMD</td>
+        <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:11.11%;background-color:#a5a3ac;">Prepared</td>
+        <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:11.11%;background-color:#a5a3ac; ">HOD</td>
+        <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:11.11%;background-color:#a5a3ac; ">ERP Team</td>
+        <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:11.11%;background-color:#a5a3ac; ">Marketing Manager</td>
+        <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:11.11%;background-color:#a5a3ac; ">Plant Head</td>
+        <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:11.11%;background-color:#a5a3ac; ">GM</td>
+        <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:11.11%;background-color:#a5a3ac; ">Finance</td>
+        <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:11.11%;background-color:#a5a3ac; ">BMD</td>
+        <td style="border:1px solid black; text-align:center; font-weight:bold; font-size:15px; width:11.11%;background-color:#a5a3ac; ">CMD</td>
     </tr>
     
     
@@ -2986,7 +2991,11 @@ td, th {  padding: 4px; }
             {{ show_signature(erp_signature, doc.erp_team_approved_on, 'Pending for ERP Team', doc.workflow_state, stop_state) }}
         {% endif %}
     </td>
-   
+       <td style="text-align:center;border:1px solid black;">
+        {% if py.show_till("Pending for Marketing Manager") %}
+            {{ show_signature(mm_signature, doc.marketing_manager_approved_on, 'Pending for Marketing Manager', doc.workflow_state, stop_state) }}
+        {% endif %}
+    </td>
     <td style="text-align:center;border:1px solid black;">
         {% if py.show_till("Pending for Plant Head") %}
             {{ show_signature(plant_signature, doc.plant_head_approved_on, 'Pending for Plant Head', doc.workflow_state, stop_state) }}
@@ -3021,7 +3030,7 @@ td, th {  padding: 4px; }
     <div style="text-align:left; font-size:12px;margin-top:5px;">
         Note: This document is Digitally Signed
     </div>
-    </div>{% endfor %}
+    </div>
     """
 
     html = render_template(template, {"doc": doc,
@@ -12248,8 +12257,8 @@ def get_stock_change_req_html(doc):
         <td style="background-color:#fec76f;text-align:center;">S.No</td>
         <td style="background-color:#fec76f;text-align:center;">Item Code</td>
         <td style="background-color:#fec76f;text-align:center;">Item Name</td>
-         <td style="background-color:#fec76f;text-align:center;">UOM</td>
         <td style="background-color:#fec76f;text-align:center;">Warehouse</td>
+        <td style="background-color:#fec76f;text-align:center;">UOM</td>
         <td style="background-color:#fec76f;text-align:center;">ERP Stock</td>
         <td style="background-color:#fec76f;text-align:center;">Phy Stock</td>
         <td style="background-color:#fec76f;text-align:center;">Difference</td>
@@ -12265,18 +12274,18 @@ def get_stock_change_req_html(doc):
         <td>{{loop.index}}</td>
         <td style="text-align:left;white-space:nowrap;">{{i.item_code or ''}}</td>
         <td style="text-align:left;">{{i.item_name or ''}}</td>
-         <td style="text-align:center;white-space:nowrap;">{{i.uom or ''}}</td>
         <td style="text-align:left;white-space:nowrap;">{{i.warehouse or ''}}</td>
+        <td style="text-align:center;white-space:nowrap;">{{i.uom or ''}}</td>
         <td style="text-align:center;white-space:nowrap;">{{i.erp_stock}}</td>
         <td style="text-align:center;white-space:nowrap;">{{i.phy_stock}}</td>
        <td style="text-align:center;white-space:nowrap;">
-    {{ i.difference }}
+    {{ i.difference}}
     <span style="color:{{ i.arrow_color }}; font-weight:bold;">{{ i.arrow }}</span>
 </td>
 
-        <td style="text-align:right;white-space:nowrap;">{{frappe.utils.fmt_money(i.rate or 0 , currency="INR")}}</td>
+        <td style="text-align:right;white-space:nowrap;">{{frappe.utils.fmt_money(i.rate or 0 , currency="INR" ,precision=4)}}</td>
         <td style="text-align:right;white-space:nowrap;">
-    {{ frappe.utils.fmt_money(i.value or 0 , currency="INR") }}
+    {{ frappe.utils.fmt_money(i.value or 0 , currency="INR", precision=0) }}
     <span style="color:{{ i.value_arrow_color }}; font-weight:bold;">{{ i.value_arrow }}</span>
 </td>
     </tr>
@@ -12286,7 +12295,7 @@ def get_stock_change_req_html(doc):
         Total Shortage Value
     </td>
     <td style="padding-top:20px;text-align:left;white-space:nowrap;font-weight:bold;border-right:hidden;border-bottom:hidden;border-left:hidden">
-        {{ frappe.utils.fmt_money(total_shortage, currency="INR") }}
+        {{ frappe.utils.fmt_money(total_shortage, currency="INR", precision=0) }}
         {% if total_shortage > 0 %}
             <span style="color:red; font-weight:bold;">↓</span>
         {% endif %}
@@ -12299,7 +12308,7 @@ def get_stock_change_req_html(doc):
         Total Excess Value
     </td>
     <td style="padding-top:20px;text-align:left;white-space:nowrap;font-weight:bold;border-right:hidden;border-bottom:hidden;border-left:hidden">
-        {{ frappe.utils.fmt_money(total_excess, currency="INR") }}
+        {{ frappe.utils.fmt_money(total_excess, currency="INR", precision=0) }}
         {% if total_excess > 0 %}
             <span style="color:green; font-weight:bold;">↑</span>
         {% endif %}

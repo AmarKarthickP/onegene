@@ -189,6 +189,9 @@ frappe.ui.form.on('Sales Order Schedule Settings', {
                 let result = r.message;
                 if (result) {
 
+                    frm.set_value('attach', null);
+                    frm.fields_dict.html.$wrapper.empty();
+
                         if (frappe.upload_dialog) {
                             frappe.upload_dialog.hide();
                             frappe.upload_dialog = null;

@@ -78,6 +78,7 @@
    "in_standard_filter": 1,
    "label": "Supplier",
    "options": "Supplier",
+   "read_only": 1,
    "read_only_depends_on": "eval:frappe.user.has_role('System Manager') == 0 && frappe.user.has_role('Security') == 1",
    "reqd": 1
   },
@@ -135,9 +136,10 @@
   {
    "depends_on": "eval: (frappe.user.has_role('Security') || frappe.user.has_role('System Manager')) && doc.workflow_state == \"In Transit\"",
    "fieldname": "security_name",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "label": "Security Name",
-   "mandatory_depends_on": "eval:frappe.user.has_role('Security') == 1 && doc.workflow_state == \"In Transit\""
+   "mandatory_depends_on": "eval:frappe.user.has_role('Security') == 1 && doc.workflow_state == \"In Transit\"",
+   "options": "\nS0388 - B KAVITHA\nSB0020 - GUNASEKARAN MR\nSB0005 - SUNDARESAN A"
   },
   {
    "allow_on_submit": 1,
@@ -285,14 +287,14 @@
    "fieldtype": "Link",
    "label": "Supplier Address",
    "options": "Address",
-   "read_only_depends_on": "eval:frappe.user.has_role('Security') == 1"
+   "read_only": 1
   },
   {
    "fetch_from": ".primary_address",
    "fieldname": "address_display",
    "fieldtype": "Small Text",
    "label": "Address",
-   "read_only_depends_on": "eval:frappe.user.has_role('Security') == 1"
+   "read_only": 1
   },
   {
    "fetch_from": "supplier_address.gstin",
@@ -420,6 +422,7 @@
    "fieldtype": "Link",
    "label": "Terms",
    "options": "Terms and Conditions",
+   "read_only": 1,
    "read_only_depends_on": "eval:frappe.user.has_role('Security') == 1"
   },
   {
@@ -474,15 +477,18 @@
   {
    "fieldname": "purchase_receipt",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Purchase Receipt",
-   "options": "Purchase Receipt"
+   "options": "Purchase Receipt",
+   "read_only": 1
   },
   {
    "fetch_from": "supplier.supplier_name",
    "fieldname": "supplier_name1",
    "fieldtype": "Data",
    "hidden": 1,
-   "label": "Supplier Name"
+   "label": "Supplier Name",
+   "read_only": 1
   },
   {
    "fieldname": "gate_entry_url",
@@ -493,7 +499,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-09 18:09:22.609010",
+ "modified": "2025-11-15 09:54:56.923769",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Advance Shipping Note",

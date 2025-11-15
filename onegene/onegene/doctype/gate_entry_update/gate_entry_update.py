@@ -14,7 +14,7 @@ class GateEntryUpdate(Document):
 # from frappe.utils import toda
 
 @frappe.whitelist()
-def create_gate_entry(entry_type,entry_document,document_id,gate_qty,no_of_box,vehicle_number=None,driver_name=None,party_type=None,party=None,entry_time=None,ref_no=None,security_no=None,security_name=None,items=None):
+def create_gate_entry(entry_type,entry_document,document_id,gate_qty,no_of_box,vehicle_number=None,driver_name=None,party_type=None,party=None,entry_time=None,ref_no=None,dc_no=None,security_no=None,security_name=None,items=None):
 	gate=frappe.new_doc('Gate Entry')
 	gate.entry_type=entry_type or ""
 	gate.entry_against=entry_document or ""
@@ -30,6 +30,7 @@ def create_gate_entry(entry_type,entry_document,document_id,gate_qty,no_of_box,v
 	gate.ref_no= ref_no or ''
 	gate.security_no=security_no or ''
 	gate.security_name = security_name or ''
+	gate.supplier_dc_number=dc_no or ''
 	# gate_entry_update = frappe.new_doc("Gate Entry Update")
 	# gate.insert(ignore_permissions=True)
 	

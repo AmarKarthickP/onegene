@@ -6,10 +6,15 @@ import json
 import frappe
 from itertools import groupby
 from operator import itemgetter
-
+import frappe
+import io
+from frappe.utils import now_datetime
 from datetime import time
 from frappe.utils import money_in_words
 import urllib.parse
+import openpyxl
+from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
+from io import BytesIO
 from frappe.utils import now
 from frappe import throw,_, bold
 from frappe.utils import flt
@@ -19,6 +24,13 @@ from frappe.utils import format_time, formatdate, now
 from frappe.model.naming import make_autoname
 from erpnext.setup.utils import get_exchange_rate
 from frappe.model.workflow import apply_workflow
+from io import BytesIO
+from datetime import datetime
+import openpyxl
+from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
+from io import BytesIO
+import openpyxl
+from openpyxl.styles import Alignment, Border, Side,Font
 from frappe.utils import (
     add_days,
     ceil,
@@ -685,11 +697,12 @@ def get_bom_details(bo, child):
     # Add items already assigned to this operation (with check_box ticked)
     for row in current_op_items:
         item_name = frappe.db.get_value("Item",row.item,'item_name')
+        item_qty = frappe.db.get_value("BOM Item",{"parent": bo,"item_code":row.item},["qty"]) or ""
         dict_list.append(frappe._dict({
             "check_box": 1,
             "name": row.selected_field,
             "item_code": row.item,
-            "req_tot_qty": row.req_tot_qty,
+            "req_tot_qty": item_qty,
             "uom": row.uom,
             'item_name':item_name
         }))
@@ -2828,9 +2841,12 @@ def create_purchase_order_schedule_from_po(doc,method):
         for schedule in doc.custom_schedule_table:
             if frappe.db.exists('Purchase Order Schedule', {'purchase_order_number': doc.name, 'item_code': schedule.item_code, 'schedule_date': schedule.schedule_date}):
                 frappe.throw("Schedule already exists for this item code and schedule date")
-                frappe.throw("இந்த Item Code மற்றும் Schedule Date க்கான அட்டவணை ஏற்கனவே உள்ளது")
-            new_doc = frappe.new_doc('Purchase Order Schedule') 
+                frappe.throw("இந்த Item Code மற்றும் Schedule Date க்கான schedule ஏற்கனவே உள்ளது")
+            po_type = frappe.db.get_value("Purchase Order",{"name":doc.name},"custom_is_jobcard__subcontracted")
+            new_doc = frappe.new_doc('Purchase Order Schedule')
+            new_doc.po_type = "Job Order" if po_type else "Purchase Order"
             new_doc.supplier_code = doc.supplier_code
+            new_doc.supplier_name = doc.supplier
             new_doc.purchase_order_number = doc.name
             new_doc.item_code = schedule.item_code
             new_doc.schedule_date = schedule.schedule_date
@@ -2851,6 +2867,9 @@ def create_purchase_order_schedule_from_po(doc,method):
             month = date_obj.strftime('%b') 
             new_doc = frappe.new_doc('Purchase Order Schedule') 
             new_doc.supplier_code = doc.supplier_code
+            new_doc.supplier_name = doc.supplier
+            po_type = frappe.db.get_value("Purchase Order",{"name":doc.name},"custom_is_jobcard__subcontracted")
+            new_doc.po_type = "Job Order" if po_type else "Purchase Order"
             new_doc.purchase_order_number = doc.name
             new_doc.item_code = schedule.item_code
             new_doc.schedule_date = schedule.schedule_date
@@ -2942,7 +2961,10 @@ def create_order_schedule_from_po_for_open(item_code, schedule_date, schedule_qt
     rate = float(rate)
     schedule_qty = float(schedule_qty)
     new_doc = frappe.new_doc('Purchase Order Schedule') 
+    new_doc.supplier_name = frappe.db.get_value("Supplier",{"supplier_code": supplier_code},"name")
     new_doc.supplier_code = supplier_code
+    po_type = frappe.db.get_value("Purchase Order",{"name":name},"custom_is_jobcard__subcontracted")
+    new_doc.po_type = "Job Order" if po_type else "Purchase Order"
     new_doc.order_type = "Open"
     new_doc.purchase_order_number = name
     new_doc.item_code = item_code
@@ -3760,9 +3782,16 @@ def get_raw_materials_for_jobcard(doc, method):
         #     doc.custom_possible_qty = possible_qty if (possible_qty) > 0 else 0
 
 def test_check():
-    doc = frappe.get_doc("Job Card", "PO-JOB17994")
-    update_quantity_in_job_card(doc, "")
-            
+    sos = frappe.db.get_all("Purchase Order Schedule", "name")
+    for row in sos:
+        print(row)
+        po = frappe.db.get_value("Purchase Order Schedule", row.name, "purchase_order_number")
+        po_type = frappe.db.get_value("Purchase Order", po, "custom_is_jobcard__subcontracted")
+        if po_type:
+            frappe.db.set_value("Purchase Order Schedule", row.name, "po_type", "Job Order")
+        else:
+            frappe.db.set_value("Purchase Order Schedule", row.name, "po_type", "Purchase Order")
+    
 @frappe.whitelist()
 def update_quantity_in_job_card(doc, method):
     operation_count = frappe.db.count("Work Order Operation", {"parent": doc.work_order})
@@ -3799,6 +3828,7 @@ def update_quantity_in_job_card(doc, method):
                 possible_qty = yet_to_process
 
         if operation_count > 1:
+            possible_qty = possible_qty + (flt(doc.custom_rejected_qty) + flt(doc.custom_rework_rejected_qty))
             final_job_card_accepted_qty = frappe.db.get_value("Job Card", {"work_order": doc.work_order, "sequence_id": operation_count}, "total_completed_qty") or 0
             if final_job_card_accepted_qty > 0:
                 waiting_qty = (flt(doc.for_quantity) - flt(doc.custom_processed_qty))
@@ -3811,7 +3841,6 @@ def update_quantity_in_job_card(doc, method):
                     possible_qty = waiting_qty
             else:
                 possible_qty = possible_qty - doc.custom_processed_qty
-
     else:
         """"Get Total Completed Quantity from the previous Job Card 
         for the Possible Quantity"""
@@ -4102,12 +4131,12 @@ def create_stock_entry_for_rework(doc, args):
                 process_loss_qty = process_loss_qty + %s,
                 custom_waiting_qty = %s - completed_qty
             WHERE name = %s
-        """, (flt(produced_qty), flt(doc.process_loss_qty), flt(doc.for_quantity), doc.operation_id))
+        """, (flt(completed_qty), flt(doc.process_loss_qty), flt(doc.for_quantity), doc.operation_id))
     if doc.sequence_id == last_sequence:
         source_warehouse = frappe.db.get_value("Work Order", doc.work_order, "wip_warehouse")
         target_warehouse = frappe.db.get_value("Item", doc.production_item, "custom_warehouse")
         item_billing_type = frappe.db.get_value("Item", {"item_code": doc.production_item}, "item_billing_type")
-        if produced_qty > 0:
+        if completed_qty > 0:
             se = frappe.new_doc("Stock Entry")
             se.disable_auto_set_process_loss_qty = 1
             se.company = "WONJIN AUTOPARTS INDIA PVT.LTD."
@@ -4115,13 +4144,13 @@ def create_stock_entry_for_rework(doc, args):
             se.work_order = doc.work_order
             se.from_bom = 1
             se.fg_completed_qty = completed_qty
-            se.process_loss_qty = process_loss_qty
+            se.process_loss_qty = completed_qty
             se.process_loss_percentage = process_loss_percentage
             se.bom_no = doc.bom_no
             se.set('items', [])
             if len(doc.custom_required_material_for_operation):
                 for row in doc.custom_required_material_for_operation:
-                    converted_raw_material_qty = (row.required_qty) * produced_qty
+                    converted_raw_material_qty = (row.required_qty) * completed_qty
                     se.append('items', {
                         "s_warehouse": source_warehouse,
                         "item_code": row.item_code,
@@ -4132,7 +4161,7 @@ def create_stock_entry_for_rework(doc, args):
                         "allow_zero_valuation_rate": 1,
                     })
             else:
-                update_job_card_raw_material_for_operation(doc.sequence_id, doc.work_order, se, source_warehouse, produced_qty)
+                update_job_card_raw_material_for_operation(doc.sequence_id, doc.work_order, se, source_warehouse, completed_qty)
             se.append('items', {
                 "t_warehouse": target_warehouse if item_billing_type != "Billing" else "Quality Inspection Pending - WAIP", # WIP
                 "item_code": doc.production_item,
@@ -4171,7 +4200,7 @@ def update_rejected_qty_in_next_job_card(work_order, sequence_id, rejected_qty):
             "sequence_id": [">", sequence_id],
         },
         fields=["name", "process_loss_qty"],
-        order_by="sequence_id desc",
+        order_by="sequence_id asc",
         limit=1
     )
 
@@ -4520,12 +4549,12 @@ def create_stock_entry(doc, args):
                 process_loss_qty = process_loss_qty + %s,
                 custom_waiting_qty = %s - completed_qty
             WHERE name = %s
-        """, (flt(produced_qty), flt(doc.process_loss_qty), flt(doc.for_quantity), doc.operation_id))
+        """, (flt(completed_qty), flt(doc.process_loss_qty), flt(doc.for_quantity), doc.operation_id))
     if doc.sequence_id == last_sequence:
         source_warehouse = frappe.db.get_value("Work Order", doc.work_order, "wip_warehouse")
         target_warehouse = frappe.db.get_value("Item", doc.production_item, "custom_warehouse")
         item_billing_type = frappe.db.get_value("Item", {"item_code": doc.production_item}, "item_billing_type")
-        if produced_qty > 0:
+        if completed_qty > 0:
             se = frappe.new_doc("Stock Entry")
             se.disable_auto_set_process_loss_qty = 1
             se.company = "WONJIN AUTOPARTS INDIA PVT.LTD."
@@ -4539,7 +4568,7 @@ def create_stock_entry(doc, args):
             se.set('items', [])
             if len(doc.custom_required_material_for_operation):
                 for row in doc.custom_required_material_for_operation:
-                    converted_raw_material_qty = (row.required_qty) * produced_qty
+                    converted_raw_material_qty = (row.required_qty) * completed_qty
                     se.append('items', {
                         "s_warehouse": source_warehouse,
                         "item_code": row.item_code,
@@ -4550,7 +4579,7 @@ def create_stock_entry(doc, args):
                         "allow_zero_valuation_rate": 1,
                     })
             else:
-                update_job_card_raw_material_for_operation(doc.sequence_id, doc.work_order, se, source_warehouse, produced_qty)
+                update_job_card_raw_material_for_operation(doc.sequence_id, doc.work_order, se, source_warehouse, completed_qty)
             se.append('items', {
                 "t_warehouse": target_warehouse if item_billing_type != "Billing" else "Quality Inspection Pending - WAIP", # WIP
                 "item_code": doc.production_item,
@@ -9033,6 +9062,10 @@ def get_user_permitted_department():
 
 
 
+
+
+
+
 @frappe.whitelist()
 def create_so_iom(name):
     self=frappe.get_doc("Inter Office Memo",name)
@@ -10333,6 +10366,294 @@ def request_vs_actual_mt(from_date, to_date):
 
     return results
 
+
+
+
+
+
+
+
+
+
+
+@frappe.whitelist()
+def download_request_vs_actual_excel(from_date, to_date):
+    
+    records = get_request_vs_actual_data(from_date, to_date)
+    
+    formatted_from_date = frappe.format(from_date,{"fieldtype":"Date"})
+    formatted_to_date = frappe.format(to_date,{"fieldtype":"Date"})
+
+    filename = f"Requested_vs_Actual_{formatted_from_date}_to_{formatted_to_date}.xlsx"
+    xlsx_file = make_xlsx_css("Requested vs Actual", records, from_date, to_date)
+
+    frappe.response['filename'] = filename
+    frappe.response['filecontent'] = xlsx_file.getvalue()
+    frappe.response['type'] = 'binary'
+
+
+def get_request_vs_actual_data(from_date, to_date):
+    
+    dep_per = []
+    results = []
+
+    def get_all_sub_departments(dept):
+        children = frappe.db.get_all(
+            "Department",
+            filters={"parent_department": dept},
+            pluck="name"
+        )
+        all_children = list(children)
+        for child in children:
+            all_children.extend(get_all_sub_departments(child))
+        return all_children
+
+    
+    if frappe.db.exists("User Permission", {"user": frappe.session.user, "allow": "Department"}):
+        dep = frappe.db.get_all(
+            "User Permission",
+            filters={"user": frappe.session.user, "allow": "Department"},
+            pluck="for_value"
+        )
+        if dep:
+            for i in dep:
+                dep_per.append(i)
+                dep_per.extend(get_all_sub_departments(i))
+        if dep_per:
+            mr = frappe.get_all(
+                "Material Request",
+                filters={
+                    "transaction_date": ["between", [from_date, to_date]],
+                    "docstatus": 1,
+                    "custom_department": ["in", dep_per]
+                },
+                pluck="name"
+            )
+    else:
+        mr = frappe.get_all(
+            "Material Request",
+            filters={"transaction_date": ["between", [from_date, to_date]], "docstatus": 1},
+            pluck="name"
+        )
+
+    
+    if mr:
+        data = frappe.get_all(
+            "Material Request Item",
+            filters={"parent": ["in", mr]},
+            fields=["item_code", "item_name", "custom_requesting_qty", "ordered_qty"]
+        )
+
+        grouped_data = {}
+        for item in data:
+            key = (item["item_code"], item["item_name"])
+            if key not in grouped_data:
+                grouped_data[key] = {"requested_qty": 0, "completed_qty": 0}
+            grouped_data[key]["requested_qty"] += item.get("custom_requesting_qty", 0) or 0
+            grouped_data[key]["completed_qty"] += item.get("ordered_qty", 0) or 0
+
+        for (item_code, item_name), qtys in grouped_data.items():
+            results.append({
+                "item_code": item_code,
+                "item_name": item_name,
+                "requested_qty": qtys["requested_qty"],
+                "completed_qty": qtys["completed_qty"]
+            })
+
+    return results
+
+
+# def make_xlsx_css(sheet_name, records, from_date, to_date, wb=None):    
+    
+#     if wb is None:
+#         wb = openpyxl.Workbook()
+
+#     ws = wb.active
+#     ws.title = sheet_name
+
+    
+#     header_fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+#     total_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+#     bold_font = Font(bold=True)
+#     center = Alignment(horizontal="center", vertical="center")
+#     left_align = Alignment(horizontal="left", vertical="center")
+#     thin_border = Border(left=Side(style='thin'), right=Side(style='thin'),
+#                          top=Side(style='thin'), bottom=Side(style='thin'))
+    
+#     formatted_from_date = frappe.format(from_date,{"fieldtype":"Date"})
+#     formatted_to_date = frappe.format(to_date,{"fieldtype":"Date"})
+    
+#     ws.merge_cells('A1:D1')
+#     ws['A1'] = f"Requested vs Actual (From {formatted_from_date} To {formatted_to_date})"
+#     ws['A1'].font = Font(bold=True, size=14)
+#     ws['A1'].alignment = center
+
+    
+#     headers = ["Item Code", "Item Name", "Requested", "Issued"]
+#     ws.append(headers)
+
+#     for col_num, header in enumerate(headers, 1):
+#         cell = ws.cell(row=2, column=col_num)
+#         cell.value = header
+#         cell.fill = header_fill
+#         cell.font = bold_font
+#         cell.alignment = center
+#         cell.border = thin_border
+
+    
+#     total_requested = 0
+#     total_completed = 0
+#     for i, row in enumerate(records, start=3):
+#         ws.cell(i, 1, row["item_code"])
+#         ws.cell(i, 2, row["item_name"])
+#         ws.cell(i, 3, row["requested_qty"])
+#         ws.cell(i, 4, row["completed_qty"])
+
+#         total_requested += row["requested_qty"] or 0
+#         total_completed += row["completed_qty"] or 0
+
+#         for col in range(1, 5):
+#             ws.cell(i, col).border = thin_border
+
+   
+#     total_row = len(records) + 3
+#     ws.cell(total_row, 1, "Total")
+#     ws.merge_cells(start_row=total_row, start_column=1, end_row=total_row, end_column=2)
+#     ws.cell(total_row, 3, total_requested)
+#     ws.cell(total_row, 4, total_completed)
+
+#     for col in range(1, 5):
+#         cell = ws.cell(total_row, col)
+#         cell.font = bold_font
+#         cell.fill = total_fill
+#         cell.border = thin_border
+#         cell.alignment = center
+
+    
+#     for col in ws.columns:
+#         max_length = 0
+#         col_letter = openpyxl.utils.get_column_letter(col[0].column)
+#         for cell in col:
+#             try:
+#                 if cell.value:
+#                     max_length = max(max_length, len(str(cell.value)))
+#             except:
+#                 pass
+#         ws.column_dimensions[col_letter].width = max_length + 3
+
+    
+#     xlsx_file = BytesIO()
+#     wb.save(xlsx_file)
+#     xlsx_file.seek(0)
+#     return xlsx_file
+
+def make_xlsx_css(sheet_name, records, from_date, to_date, wb=None):
+    
+
+    if wb is None:
+        wb = openpyxl.Workbook()
+
+    ws = wb.active
+    ws.title = sheet_name
+
+    
+    header_fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+    total_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    bold_font = Font(bold=True)
+    center = Alignment(horizontal="center", vertical="center")
+    left_align = Alignment(horizontal="left", vertical="center")
+    right_align = Alignment(horizontal="right", vertical="center")
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    
+    formatted_from_date = frappe.format(from_date, {"fieldtype": "Date"})
+    formatted_to_date = frappe.format(to_date, {"fieldtype": "Date"})
+
+    ws.merge_cells('A1:D1')
+    ws['A1'] = f"Requested vs Actual (From {formatted_from_date} To {formatted_to_date})"
+    ws['A1'].font = Font(bold=True, size=14)
+    ws['A1'].alignment = center
+
+    
+    headers = ["Item Code", "Item Name", "Requested", "Issued"]
+    ws.append(headers)
+
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=2, column=col_num)
+        cell.value = header
+        cell.fill = header_fill
+        cell.font = bold_font
+        cell.alignment = center
+        cell.border = thin_border
+
+    
+    total_requested = 0
+    total_completed = 0
+    row_index = 3
+    
+    for i, row in enumerate(records, start=3):
+        requested_qty = row["requested_qty"] or 0
+        completed_qty = row["completed_qty"] or 0
+        
+        if requested_qty <= 0:
+            continue
+
+        ws.cell(i, 1, row["item_code"])
+        ws.cell(i, 2, row["item_name"])
+        ws.cell(i, 3, "-" if requested_qty == 0 else requested_qty)
+        ws.cell(i, 4, "-" if completed_qty == 0 else completed_qty)
+
+        total_requested += requested_qty
+        total_completed += completed_qty
+
+        for col in range(1, 5):
+            ws.cell(i, col).border = thin_border
+            ws.cell(i, col).alignment = Alignment(horizontal="right" if col > 2 else "left", vertical="center")
+        row_index += 1     
+
+    
+    # total_row = len(records) + 3
+    total_row = row_index
+    ws.cell(total_row, 1, "Total")
+    ws.merge_cells(start_row=total_row, start_column=1, end_row=total_row, end_column=2)
+    ws.cell(total_row, 3, "-" if total_requested == 0 else total_requested)
+    ws.cell(total_row, 4, "-" if total_completed == 0 else total_completed)
+
+    
+    for col in range(1, 5):
+        cell = ws.cell(total_row, col)
+        cell.font = bold_font
+        cell.fill = total_fill
+        cell.border = thin_border
+        
+        if col in (1, 2):
+            cell.alignment = left_align
+        else:
+            cell.alignment = right_align
+
+    
+    for col in ws.columns:
+        max_length = 0
+        col_letter = openpyxl.utils.get_column_letter(col[0].column)
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except Exception:
+                pass
+        ws.column_dimensions[col_letter].width = max_length + 3
+
+    
+    xlsx_file = BytesIO()
+    wb.save(xlsx_file)
+    xlsx_file.seek(0)
+    return xlsx_file
+
     
 @frappe.whitelist()
 def today_req_qty_update(item_code, date):
@@ -10462,7 +10783,7 @@ def get_inspection_ids(exclude_qids, customer):
     return options
 
 @frappe.whitelist()
-def get_quality_inspection_data_for_si(qid):
+def get_quality_inspection_data_for_si(qid, customer):
     if not frappe.db.exists("Quality Inspection QID", {"qid_data": qid}):
         return "not found"
 
@@ -10479,11 +10800,30 @@ def get_quality_inspection_data_for_si(qid):
     quality_inspection = frappe.db.get_value("Quality Inspection QID", {"qid_data": qid}, "parent")
     accepted_qty = frappe.db.get_value("Quality Inspection QID", {"qid_data": qid}, "quantity") or 0
     item_code = frappe.db.get_value("Quality Inspection", quality_inspection, "item_code")
+    check_item_exists_for_customer(item_code, customer, qid)
     rack = frappe.db.get_value("Item Rack", {"parent": item_code, "is_default": 1}, "rack") or ""
     location = frappe.db.get_value("Item Rack Location", {"parent": item_code, "is_default": 1}, "location") or ""
     uom = frappe.db.get_value("Item", item_code, "stock_uom")
     item_name = frappe.db.get_value("Quality Inspection", quality_inspection,['item_name'])
     return item_code, accepted_qty, rack, location, uom, item_name, quality_inspection
+
+def check_item_exists_for_customer(item_code, customer, qid=None):
+    sales_orders = frappe.get_all(
+        "Sales Order",
+        filters={"customer": customer, "docstatus": 1},
+        pluck="name"
+    )
+    if not sales_orders:
+        frappe.throw(
+            f"QID <b>{qid}</b> is not applicable for the customer <b>{customer}</b>",
+            title="Invalid QID"
+        )
+        
+    if not frappe.db.exists("Sales Order Item",{"parent": ["in", sales_orders], "item_code": item_code}):
+        frappe.throw(
+            f"QID <b>{qid}</b> is not applicable for the customer <b>{customer}</b>",
+            title="Invalid QID"
+        )
 
 def mark_qid_for_si(doc, method):
     qids = []
@@ -10548,5 +10888,59 @@ def update_existing_asn():
             ge.save(ignore_permissions=True)
             frappe.db.commit() 
 
-            
-            
+@frappe.whitelist()
+def get_today_value():
+    return today()
+
+@frappe.whitelist()
+def custom_update_items(data, sales_order=None, puchase_order=None):
+	data = json.loads(data)
+	items = data.get("items_table", [])
+	if sales_order:
+		open_order = frappe.get_doc("Open Order", {"sales_order_number": sales_order})
+		for so_row in items:
+			for op_row in open_order.open_order_table:
+				if so_row["item_code"] == op_row.item_code:
+					if op_row.rate != so_row["rate"]:
+						old_value = op_row.rate
+						op_row.rate = so_row["rate"]
+						# Revision Log
+						next_idx = frappe.db.count("Sales Order Revision", {"parent": sales_order}) + 1
+						log = frappe.new_doc("Sales Order Revision")
+						log.parent = sales_order
+						log.parenttype = "Sales Order"
+						log.parentfield = "custom_revision_logs"
+						log.idx = next_idx  # <-- IMPORTANT
+						log.item_code = so_row["item_code"]
+						log.old_value = old_value
+						log.new_value = so_row["rate"]
+						log.revised_on = now()
+						log.revised_by = frappe.session.user
+						log.insert(ignore_permissions=True)
+						# Update in Sales Order Schedule
+						if frappe.db.exists("Sales Order Schedule",{"item_code":so_row["item_code"],"sales_order_number":sales_order}):
+							sos_doc = frappe.db.get_value(
+								"Sales Order Schedule",
+								{"item_code": so_row["item_code"], "sales_order_number": sales_order},
+								["name", "exchange_rate", "qty", "delivered_qty", "pending_qty"],
+								as_dict=True
+							)
+
+							if sos_doc:
+								update_vals = {
+									"order_rate": so_row["rate"],
+									# "order_rate_inr": sos_doc.exchange_rate * so_row["rate"],
+									"schedule_amount": sos_doc.qty * so_row["rate"],
+									# "schedule_amount_inr": sos_doc.qty * so_row["rate"] * sos_doc.exchange_rate,
+									"delivered_amount": sos_doc.delivered_qty * so_row["rate"],
+									# "delivered_amount_inr": sos_doc.delivered_qty * so_row["rate"] * sos_doc.exchange_rate,
+									"pending_amount": sos_doc.pending_qty * so_row["rate"],
+									# "pending_amount_inr": sos_doc.pending_qty * so_row["rate"] * sos_doc.exchange_rate
+								}
+
+								frappe.db.set_value("Sales Order Schedule", sos_doc.name, update_vals)
+						break
+
+		open_order.disable_update_items = 0
+		open_order.save(ignore_permissions=True)
+		return True

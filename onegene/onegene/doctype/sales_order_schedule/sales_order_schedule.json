@@ -314,7 +314,8 @@
    "default": "0",
    "fieldname": "disable_update_items",
    "fieldtype": "Check",
-   "label": "Disable Update Items"
+   "label": "Disable Update Items",
+   "read_only": 1
   },
   {
    "allow_on_submit": 1,
@@ -384,7 +385,8 @@
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
-   "options": "Currency"
+   "options": "Currency",
+   "read_only": 1
   },
   {
    "allow_on_submit": 1,
@@ -393,7 +395,8 @@
    "fieldname": "exchange_rate",
    "fieldtype": "Float",
    "label": "Exchange Rate",
-   "precision": "9"
+   "precision": "9",
+   "read_only": 1
   },
   {
    "fetch_from": "customer_name.customer_group",
@@ -428,7 +431,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-06 10:56:20.189013",
+ "modified": "2025-11-13 10:32:06.444209",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Sales Order Schedule",

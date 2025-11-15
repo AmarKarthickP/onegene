@@ -11,6 +11,7 @@
   "document_id",
   "party_type",
   "party",
+  "supplier_dc_number",
   "column_break_kmbn",
   "entry_time",
   "ref_no",
@@ -124,7 +125,8 @@
    "fieldname": "gate_entry_item",
    "fieldtype": "Table",
    "label": "Gate Entry Item",
-   "options": "Gate Entry Item"
+   "options": "Gate Entry Item",
+   "read_only": 1
   },
   {
    "fieldname": "no_of_box",
@@ -138,13 +140,19 @@
    "fieldtype": "Data",
    "label": "Security Name",
    "reqd": 1
+  },
+  {
+   "fieldname": "supplier_dc_number",
+   "fieldtype": "Data",
+   "label": "Supplier DC Number",
+   "read_only": 1
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-11-08 14:31:52.780362",
+ "modified": "2025-11-12 17:15:36.050898",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Gate Entry Update",

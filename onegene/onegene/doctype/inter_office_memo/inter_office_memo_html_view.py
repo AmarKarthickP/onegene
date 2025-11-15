@@ -334,6 +334,10 @@ def get_schedule_increase_delivery_html(doc):
     </tr>
     
 </table>
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Total Sales Plan</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ frappe.utils.fmt_money(doc.total_sales_plan, 2,currency="INR") }}</span>
+</div>
 
     <br>
    
@@ -609,8 +613,31 @@ def get_schedule_revise_delivery_html(doc):
         <td style="background-color:#fec76f;text-align:center;">Difference Value</td>
     </tr>
 
-    {% set ns = namespace(counter=1, total_difference=0) %}
-
+    {% set ns = namespace(total_difference=0) %}
+    {% if doc.supplier_wise_schedule %}
+        {% for row in doc.supplier_wise_schedule %}
+            {% set ns.total_difference = ns.total_difference + row.difference_value %}
+            {# Set up/down arrow #}
+            {% if row.difference_value > 0 %}
+                {% set arrow = '<span style="color:green;">&#9650;</span>' %} {# ▲ Up arrow (green) #}
+            {% elif row.difference_value < 0 %}
+                {% set arrow = '<span style="color:red;">&#9660;</span>' %} {# ▼ Down arrow (red) #}
+            {% else %}
+                {% set arrow = '' %}
+            {% endif %}
+            <tr>
+                <td style="text-align:center;">{{ loop.index }}</td>
+                <td style="text-align:left;">{{ row.supplier_type or '' }}</td>
+                <td style="text-align:left;">{{ row.supplier_code }}</td>
+                <td style="text-align:right;">{{ frappe.utils.fmt_money(row.current_schedule_value, 2, currency="INR") }}</td>
+                <td style="text-align:right;">{{ frappe.utils.fmt_money(row.revised_schedule_value, 2, currency="INR") }}</td>
+                <td style="text-align:right;">
+                    {{ frappe.utils.fmt_money(row.difference_value, 2, currency="INR") }} {{ arrow | safe }}
+                </td>
+            </tr>
+        {% endfor %}
+    {% else %}
+   
     {% for code, data in grouped.items() %}
         {% set current_val = (schedule_totals.get(code) if schedule_totals else 0) | float %}
         {% set increase_val = (data.increase_value or 0) | float %}
@@ -640,7 +667,7 @@ def get_schedule_revise_delivery_html(doc):
         </tr>
         {% set ns.counter = ns.counter + 1 %}
     {% endfor %}
-
+    {%endif%}
     <tr>
         <td colspan="5" style="text-align:center;font-size:13px;font-weight:bold;">Total</td>
         <td style="text-align:right;font-size:13px;font-weight:bold;">
@@ -648,13 +675,6 @@ def get_schedule_revise_delivery_html(doc):
         </td>
     </tr>
 </table><br>
-{% if doc.total_sales_plan %}
-    <b>Total Sales Plan: </b>{{ "₹{:,.2f}".format(doc.total_sales_plan or 0) }}<br>
-    {% endif %}
-
-        <br>
-    
-   
 
         {% set name=frappe.db.get_value("Employee",{"user_id":doc.owner},"employee_name") %}
         {# ---- SIGNATURE SECTION ---- #}

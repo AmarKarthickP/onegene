@@ -60,6 +60,55 @@ frappe.ui.form.on('Material Transfer', {
 
        
     },
+    setup(frm){
+        frappe.call({
+            method: "onegene.onegene.custom.get_user_permitted_department",
+            callback: function(r) {
+                let permitted_departments = r.message || [];
+                
+                if (permitted_departments.length === 0) {
+                        frm.set_query("issued_by", function() {
+                            return {}; 
+                        });
+                        return;
+                    }
+
+                if (permitted_departments.includes("All Departments")) {
+                    frm.set_query("issued_by", function() {
+                            return {}; 
+                        });
+                        return;
+                }
+
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: {
+                        doctype: "Department",
+                        filters: {
+                            "parent_department": ["in", permitted_departments]
+                        },
+                        fields: ["name"]
+                    },
+                    callback: function(child_r) {
+                        let child_departments = child_r.message.map(d => d.name) || [];
+                        
+                        let departments_to_filter = permitted_departments.concat(child_departments);
+
+                        frm.set_query("issued_by", function() {
+                            return {
+                                filters: {
+                                    "department": ["in", departments_to_filter]
+                                }
+                            };
+                        });
+                    }
+                });
+            }
+        });
+
+        
+    },
+
 
 
 before_workflow_action: async (frm) => {

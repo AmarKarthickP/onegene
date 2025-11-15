@@ -23,21 +23,28 @@ class AdvanceShippingNote(Document):
 		entry_time = now_datetime()
 		params = {
 			"entry_time": entry_time.isoformat(),
-			"document_id": self.name,
+			"document_id": self.confirm_supplier_dn or '',
 			"entry_document": 'Advance Shipping Note',
-			"entry_type": 'Outward',
-			"vehicle_number":self.vehicle_no,
+			"entry_type": 'Inward',
+			"vehicle_number":self.vehicle_no or '',
 			"party_type":"Supplier",
 			"party":self.supplier,
-			"ref":self.confirm_supplier_dn,
-			"security_name":self.security_name,
-			"driver_name":self.driver_name
+			"ref":self.name,
+			"security_name":self.security_name or '',
+			"driver_name":self.driver_name or '',
+			"supplier_dc_number":self.supplier_delivery_note or '',
 		}
-  
+		
 		query_string = urllib.parse.urlencode(params)
 		full_url = f"https://erp.onegeneindia.in/app/gate-entry-update?{query_string}"
+		frappe.errprint(full_url)
 		encoded_url = urllib.parse.quote(full_url, safe="")  
 		self.gate_entry_url = encoded_url
+
+		for row in self.item_table:   
+			if row.no_of_bins <= 0:
+				frappe.throw("Bin value must be greater than 0")
+
 		
 @frappe.whitelist()
 def get_month(self):

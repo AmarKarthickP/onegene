@@ -9,6 +9,7 @@
  "field_order": [
   "section_break_arwz",
   "item",
+  "bom_item",
   "document_name",
   "operation",
   "operation_name",
@@ -63,11 +64,17 @@
    "fieldname": "operation",
    "fieldtype": "Data",
    "label": "Operation"
+  },
+  {
+   "fieldname": "bom_item",
+   "fieldtype": "Link",
+   "label": "Bom Item",
+   "options": "Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-28 18:05:46.998045",
+ "modified": "2025-11-13 13:35:25.052673",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Operation Item List",

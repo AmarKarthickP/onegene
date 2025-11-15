@@ -190,6 +190,8 @@ frappe.ui.form.on('Purchase Order Schedule Settings', {
                 let result = r.message;
                 if (result) {
                     frm.set_value('attach', null);
+                    frm.fields_dict.html.$wrapper.empty();
+                    
                     
                     
                     // frappe.msgprint({

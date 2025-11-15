@@ -39,10 +39,11 @@ def get_qid_for_quality_inspection(quality_inspection):
 					<td rowspan=5>
 						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ row.qid_data }" alt="QR Code" />
 					</td>
-					<td><b><br>&nbsp;Date: { doc.report_date }</b></td>
+					<td><b><br>&nbsp;Date: { frappe.format(doc.creation,{"fieldtype":"Datetime"}) }</b></td>
 				</tr>
 				<tr>
-					<td><b>&nbsp;ID: { row.qid_data }</b></td>
+					<td><b>&nbsp;Job Card: { frappe.db.get_value("Quality Pending",{"name":doc.custom_quality_pending},"reference_name") }</b></td>
+					<!-- <td><b>&nbsp;ID: {row.qid_data  }</b></td> -->
 				</tr>
 				<tr>
 					<td><b>&nbsp;Quality Inspection: { doc.name }</b></td>
@@ -152,10 +153,11 @@ def get_qid_for_quality_inspection_html(quality_inspection):
 					<td rowspan=5>
 						<img width="100px" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&amp;data={ row.qid_data }" alt="QR Code" />
 					</td>
-					<td><b>&nbsp;Date: { doc.report_date }</b></td>
+					<td><b>&nbsp;Date: { frappe.format(doc.creation,{"fieldtype":"Datetime"}) }</b></td>
 				</tr>
 				<tr>
-					<td><b>&nbsp;ID: { row.qid_data }</b></td>
+					<td><b>&nbsp;Job Card: { frappe.db.get_value("Quality Pending",{"name":doc.custom_quality_pending},"reference_name") }</b></td>
+				 	<!-- <td><b>&nbsp;ID: {row.qid_data  }</b></td> -->
 				</tr>
 				<tr>
 					<td><b>&nbsp;Quality Inspection: { doc.name }</b></td>

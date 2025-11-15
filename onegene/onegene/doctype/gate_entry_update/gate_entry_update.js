@@ -15,6 +15,9 @@ frappe.ui.form.on("Gate Entry Update", {
         }
         if (params.entry_document) {
             frm.set_value('entry_document', params.entry_document);
+            if (params.entry_document === 'Advance Shipping Note') {
+                frm.set_df_property('ref_no', 'label', 'Confirm Supplier DC Number');
+            }
         }
         if (params.document_id) {
             frm.set_value('document_id', params.document_id);
@@ -35,11 +38,17 @@ frappe.ui.form.on("Gate Entry Update", {
             frm.set_value('ref_no', params.ref);
         }
         if(params.security){
-            frm.set_value('security_no', params.security);
+            frm.set_value('security_no', params.security || '');
         }
         if(params.security_name){
-            frm.set_value('security_name', params.security_name);
+            frm.set_value('security_name', params.security_name || '');
         }
+        if(params.supplier_dc_number){
+            frm.set_value('supplier_dc_number', params.supplier_dc_number || '');
+        }
+        // if(params.confirm_supplier_dc_number){
+        //     frm.set_value('confirm_supplier_dc_number', params.confirm_supplier_dc_number || '');
+        // }
        const now = frappe.datetime.now_datetime(); 
         frm.set_value('entry_time', now);
 
@@ -203,7 +212,7 @@ frappe.ui.form.on("Gate Entry Update", {
                                 party: frm.doc.party,
                                 entry_time: frm.doc.entry_time,
                                 ref_no: frm.doc.ref_no,
-                                // security_no: frm.doc.security_no,
+                                dc_no: frm.doc.supplier_dc_number,
                                 security_name: frm.doc.security_name,
                                 items: frm.doc.gate_entry_item
                             },

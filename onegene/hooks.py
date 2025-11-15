@@ -523,7 +523,7 @@ doc_events = {
 		"on_trash":"onegene.onegene.custom.revert_processed_qty_in_tool",
 	},
 	"Supplier":{
-		"after_insert": "onegene.onegene.custom.create_user_for_supplier",
+		"after_insert": "onegene.onegene.supplier_user_creation.supp_user",
 	}
  
  
