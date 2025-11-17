@@ -37,7 +37,6 @@ class AdvanceShippingNote(Document):
 		
 		query_string = urllib.parse.urlencode(params)
 		full_url = f"https://erp.onegeneindia.in/app/gate-entry-update?{query_string}"
-		frappe.errprint(full_url)
 		encoded_url = urllib.parse.quote(full_url, safe="")  
 		self.gate_entry_url = encoded_url
 

@@ -3140,6 +3140,7 @@ def get_tooling_invoice_html(doc):
     </tr>
 </table>
 
+{% set emp_name=frappe.db.get_value("Employee",{"user_id":doc.owner},"employee_name") %}
 
 <table style="width:100%; border-collapse: collapse; margin-top:-1px;">
     <tr>
@@ -3147,7 +3148,7 @@ def get_tooling_invoice_html(doc):
            <p style="line-height:1.1">
     <span style="display:inline-block; width:90px;">Dept.From </span>:&nbsp;{{ doc.department_from or '' }}<br><br>
     <span style="display:inline-block; width:90px;">Dept.To</span>:&nbsp; {{ doc.department_to or '' }}<br><br>
-    <span style="display:inline-block; width:90px;">Instructed By</span>: &nbsp;{{ doc.employee_name or '' }}<br><br>
+    <span style="display:inline-block; width:90px;">Created By</span>: &nbsp;{{ emp_name or '' }}<br><br>
    
 </p>
 
@@ -3156,6 +3157,8 @@ def get_tooling_invoice_html(doc):
            <p style="line-height:1.1">
             <span style="display:inline-block; width:90px;">Date & Time</span>: {{ frappe.utils.format_datetime(doc.date_time, "dd-MM-yyyy HH:mm:ss") or '' }}<br><br>
     <span style="display:inline-block; width:90px;">Doc.No</span>: {{ doc.name }}<br><br>
+        <span style="display:inline-block; width:90px;white-space:nowrap">Requested By&nbsp</span>: &nbsp;{{ doc.employee_name or '' }}<br><br>
+
        </p></td>
    </tr>
     
@@ -3197,6 +3200,13 @@ def get_tooling_invoice_html(doc):
     <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Currency</span>
     <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.currency or 'NA' }}</span>
 </div>
+{% if doc.customer_group == "Export" %}
+
+<div style="margin-bottom: 4px;">
+    <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">Exchange Rate</span>
+    <span>:&nbsp;&nbsp;&nbsp;&nbsp;{{ doc.exchange_rate or 'NA' }}</span>
+</div>
+{%endif%}
 <div style="margin-bottom: 4px;">
     <span style="display:inline-block;width:{{ label_width }};font-weight:bold;">PO No & PO Date</span>
     <span>
@@ -3259,8 +3269,8 @@ def get_tooling_invoice_html(doc):
      {% for i in doc.approval_tooling_invoice%}
     <tr>
         <td>{{loop.index}}</td>
-        <td style="text-align:left;white-space:nowrap;font-size:10px;">{{i.part_no or i.item_code_new or ''}}</td>
-        <td style="text-align:left;white-space:nowrap;font-size:10px;">{{i.part_name or i.item_name_new or ''}}</td>
+        <td style="text-align:left;">{{i.part_no or i.item_code_new or ''}}</td>
+        <td style="text-align:left;">{{i.part_name or i.item_name_new or ''}}</td>
                 <td style="text-align:center;white-space:nowrap;">{{i.qty}}</td>
 
         <td style="text-align:right;white-space:nowrap;">{{frappe.utils.fmt_money(i.po_price or 0 , currency=doc.currency)}}</td>
