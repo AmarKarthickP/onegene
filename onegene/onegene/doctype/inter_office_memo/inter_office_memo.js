@@ -173,8 +173,9 @@ frappe.ui.form.on("Inter Office Memo", {
     advance_amount_new(frm){
         if(frm.doc.advance_amount_new && frm.doc.estimated_travel_expenses_new && frm.doc.advance_amount_new > frm.doc.estimated_travel_expenses_new){
 
-            frappe.throw("Advance Amount must be lesser or equal to Estimated Travel Expenses")
             frm.set_value("advance_amount_new","")
+            frappe.throw("Advance Amount must be lesser or equal to Estimated Travel Expenses")
+            
 
         }
     },
@@ -182,8 +183,9 @@ frappe.ui.form.on("Inter Office Memo", {
     estimated_travel_expenses_new(frm){
         if(frm.doc.advance_amount_new && frm.doc.estimated_travel_expenses_new && frm.doc.advance_amount_new > frm.doc.estimated_travel_expenses_new){
 
-            frappe.throw("Advance Amount must be lesser or equal to Estimated Travel Expenses")
             frm.set_value("estimated_travel_expenses_new","")
+            frappe.throw("Advance Amount must be lesser or equal to Estimated Travel Expenses")
+            
 
         }
     },
