@@ -14400,15 +14400,15 @@ def get_travel_request_html(doc):
             <td style="padding:6px; text-align:center;">{{ loop.index }}</td>
             <td style="padding:6px; text-align:left;">{{ i.type or '' }}</td>
             <td style="padding:6px; text-align:center;">{{ i.currency or '' }}</td>
-            <td style="padding:6px; text-align:right;">{{ frappe.utils.fmt_money(i.sponsored_amount, 2, currency=i.currency) }}</td>
-            <td style="padding:6px; text-align:right;">{{ frappe.utils.fmt_money(i.funded_amount, 2, currency=i.currency) }}</td>
+            <td style="padding:6px; text-align:right;">{{ "-" if i.sponsored_amount == 0 else frappe.utils.fmt_money(i.sponsored_amount, 0, currency=i.currency) }}</td>
+            <td style="padding:6px; text-align:right;">{{ "-" if i.funded_amount == 0 else frappe.utils.fmt_money(i.funded_amount, 0, currency=i.currency) }}</td>
         </tr>
         {% endfor %}
 
         <tr>
             <td colspan="3" style="padding:6px; text-align:center; font-weight:bold;background-color: #f0f4ff">Total Amount</td>
-            <td style="padding:6px; text-align:right; font-weight:bold;background-color: #f0f4ff">{{ frappe.utils.fmt_money(doc.total_sponsored_amount, 2) }}</td>
-            <td style="padding:6px; text-align:right; font-weight:bold;background-color: #f0f4ff">{{ frappe.utils.fmt_money(doc.total_funded_amount, 2) }}</td>
+            <td style="padding:6px; text-align:right; font-weight:bold;background-color: #f0f4ff">{{ "-" if doc.total_sponsored_amount_new == 0 else frappe.utils.fmt_money(doc.total_sponsored_amount_new, 0) }}</td>
+            <td style="padding:6px; text-align:right; font-weight:bold;background-color: #f0f4ff">{{ "-" if doc.total_funded_amount_new == 0 else frappe.utils.fmt_money(doc.total_funded_amount_new, 0) }}</td>
         </tr>
     </tbody>
 </table>
@@ -14420,12 +14420,12 @@ def get_travel_request_html(doc):
 
         <td style=" text-align:left; border-top:hidden; border-bottom:hidden;border-right:hidden;border-left:hidden">
             <span >Estimated Travel Expenses</span>
-            <span style="font-weight:bold;">: {{ frappe.utils.fmt_money(doc.estimated_travel_expenses_new, 2, currency="INR") }}</span>
+            <span style="font-weight:bold;">: {{ "-" if doc.estimated_travel_expenses_new == 0 else frappe.utils.fmt_money(doc.estimated_travel_expenses_new, 0, currency="INR") }}</span>
         </td>
 
         <td style=" text-align:left; border-top:hidden; border-bottom:hidden; border-right:hidden; border-left:hidden;  margin-left:10px;">
             <span >Advance Amount</span>
-            <span style="font-weight:bold;">: {{ frappe.utils.fmt_money(doc.advance_amount_new, 2, currency="INR") }}</span>
+            <span style="font-weight:bold;">: {{"-" if doc.advance_amount_new == 0 else frappe.utils.fmt_money(doc.advance_amount_new, 0, currency="INR") }}</span>
         </td>
     </tr>
 </table>
