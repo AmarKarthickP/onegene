@@ -1,5 +1,4 @@
 frappe.ready(() => {
-    console.log("klendknew")
     const hideWorkspaceButtons = () => {
         // Hide "Create Workspace" button
         document.querySelectorAll('button').forEach(btn => {

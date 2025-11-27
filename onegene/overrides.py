@@ -502,7 +502,7 @@ class CustomJobCard(JobCard):
 							"to_time": get_datetime(args.get("complete_time")),
 							"operation": args.get("sub_operation"),
 							"completed_qty": args.get("completed_qty") or 0.0,
-                            
+							
 						}
 					)
 		elif args.get("start_time"):
@@ -511,7 +511,7 @@ class CustomJobCard(JobCard):
 					"from_time": get_datetime(args.get("start_time")),
 					"operation": args.get("sub_operation"),
 					"completed_qty": 0.0,
-                    
+					
 				}
 			)
 
@@ -536,7 +536,7 @@ class CustomStockEntry(StockEntry):
 		if self.purpose not in ("Manufacture", "Repack"):
 			return
 		
-		if self.disable_auto_set_process_loss_qty:
+		if getattr(self, "disable_auto_set_process_loss_qty", 0):
 			return
 
 		precision = self.precision("process_loss_qty")
@@ -688,16 +688,16 @@ class CustomProductionPlan(ProductionPlan):
 	
 			
 def parse_datetime_safe(value):
-    if isinstance(value, datetime.datetime):
-        return value
-    if isinstance(value, str):
-        # Try ISO/MySQL format first
-        for fmt in ("%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M:%S"):
-            try:
-                return datetime.datetime.strptime(value, fmt)
-            except ValueError:
-                continue
-    raise ValueError(f"Unrecognized datetime format: {value}")
+	if isinstance(value, datetime.datetime):
+		return value
+	if isinstance(value, str):
+		# Try ISO/MySQL format first
+		for fmt in ("%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M:%S"):
+			try:
+				return datetime.datetime.strptime(value, fmt)
+			except ValueError:
+				continue
+	raise ValueError(f"Unrecognized datetime format: {value}")
 		
 def set_default_warehouses(row, default_warehouses):
 	for field in ["wip_warehouse", "fg_warehouse"]:

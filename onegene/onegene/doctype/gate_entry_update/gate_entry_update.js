@@ -1,6 +1,7 @@
 // Copyright (c) 2025, TEAMPRO and contributors
 // For license information, please see license.txt
 
+
 frappe.ui.form.on("Gate Entry Update", {
     onload(frm){
         frm.set_value('entry_type', '');
@@ -15,9 +16,6 @@ frappe.ui.form.on("Gate Entry Update", {
         }
         if (params.entry_document) {
             frm.set_value('entry_document', params.entry_document);
-            if (params.entry_document === 'Advance Shipping Note') {
-                frm.set_df_property('ref_no', 'label', 'Confirm Supplier DC Number');
-            }
         }
         if (params.document_id) {
             frm.set_value('document_id', params.document_id);
@@ -38,17 +36,11 @@ frappe.ui.form.on("Gate Entry Update", {
             frm.set_value('ref_no', params.ref);
         }
         if(params.security){
-            frm.set_value('security_no', params.security || '');
+            frm.set_value('security_no', params.security);
         }
         if(params.security_name){
-            frm.set_value('security_name', params.security_name || '');
+            frm.set_value('security_name', params.security_name);
         }
-        if(params.supplier_dc_number){
-            frm.set_value('supplier_dc_number', params.supplier_dc_number || '');
-        }
-        // if(params.confirm_supplier_dc_number){
-        //     frm.set_value('confirm_supplier_dc_number', params.confirm_supplier_dc_number || '');
-        // }
        const now = frappe.datetime.now_datetime(); 
         frm.set_value('entry_time', now);
 
@@ -212,7 +204,8 @@ frappe.ui.form.on("Gate Entry Update", {
                                 party: frm.doc.party,
                                 entry_time: frm.doc.entry_time,
                                 ref_no: frm.doc.ref_no,
-                                dc_no: frm.doc.supplier_dc_number,
+                                no_of_pallet: frm.doc.no_of_pallet,
+                                // security_no: frm.doc.security_no,
                                 security_name: frm.doc.security_name,
                                 items: frm.doc.gate_entry_item
                             },
@@ -295,20 +288,36 @@ function fetch_items(frm) {
                 entry_id: frm.doc.document_id,
                 entry_document: frm.doc.entry_document,
             },
-            callback: function(r) {
+            callback: function (r) {
                 if (r.message) {
+
+                    frm.set_value("party_type", r.message.party_type || "");
+                    frm.set_value("party", r.message.party || "");
+                    frm.set_value("ref_no", r.message.ref_no || "");
+                    frm.set_value("security_name", r.message.security_name || "");
+                    frm.set_value("vehicle_number", r.message.vehicle_number || "");
+                    frm.set_value("driver_name", r.message.driver_name || "");
                     frm.clear_table("gate_entry_item");
-                    r.message.forEach(function(item){
-                        let row = frm.add_child("gate_entry_item");
-                        row.item_code = item.item_code;
-                        row.qty = item.qty;
-                        row.item_name = item.item_name;
-                        row.uom = item.uom;
-                        row.box = item.box;
-                    });
+
+                    if (r.message.items && r.message.items.length > 0) {
+                        r.message.items.forEach(function (item) {
+                            let row = frm.add_child("gate_entry_item");
+                            row.item_code = item.item_code;
+                            row.qty = item.qty;
+                            row.item_name = item.item_name;
+                            row.uom = item.uom;
+                            row.box = item.box;
+                            row.pallet = item.pallet;
+                        });
+                    }
+
+                    frm.refresh_field("gate_entry_item");
+                } else {
+                    frm.clear_table("gate_entry_item");
                     frm.refresh_field("gate_entry_item");
                 }
             }
+
         });
     }
 }

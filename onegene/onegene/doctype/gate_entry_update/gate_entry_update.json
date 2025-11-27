@@ -25,7 +25,10 @@
   "section_break_mkna",
   "items",
   "gate_entry_item",
-  "no_of_box"
+  "section_break_noe4",
+  "no_of_box",
+  "column_break_il1r",
+  "no_of_pallet"
  ],
  "fields": [
   {
@@ -146,13 +149,28 @@
    "fieldtype": "Data",
    "label": "Supplier DC Number",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_noe4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_il1r",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "no_of_pallet",
+   "fieldtype": "Float",
+   "label": "No of Pallet",
+   "reqd": 1
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-11-12 17:15:36.050898",
+ "modified": "2025-11-26 16:48:50.966988",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Gate Entry Update",

@@ -27,7 +27,8 @@ class GateEntry(Document):
                         SET workflow_state = %s
                         WHERE name = %s AND docstatus = 1
                     """, ('Dispatched', self.entry_id))
-
+                    frappe.db.set_value("Sales Invoice",doc.name,'vehicle_no',self.vehicle_number)
+                    frappe.db.set_value("Sales Invoice",doc.name,'lr_no',self.ref_no)
                     if doc.custom_invoice_type=='Export Invoice':
                         if frappe.db.exists('Logistics Request',{'status':'Ready to Ship','order_no':self.entry_id}):
                             lr=frappe.get_doc('Logistics Request',{'status':'Ready to Ship','order_no':self.entry_id})
@@ -43,7 +44,7 @@ class GateEntry(Document):
                     doc.vehicle_no=self.vehicle_number
                     doc.driver_name=self.driver_name
                     doc.received_date_time=self.entry_time
-                doc.save(ignore_permission=True)
+                doc.save(ignore_permissions=True)
        
                 
         self.submit()

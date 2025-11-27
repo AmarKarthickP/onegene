@@ -76,7 +76,7 @@ class SalesOrderSchedule(Document):
 		
 			self.schedule_year = self.schedule_date.year
 			self.schedule_month = self.schedule_date.strftime("%b").upper()
-		doc = frappe.db.get_value("Sales Order Schedule",{"item_code":self.item_code, "customer_name":self.customer_name,"schedule_month":self.schedule_month,"schedule_year":self.schedule_year},["name", "item_code", "schedule_month"], 
+		doc = frappe.db.get_value("Sales Order Schedule",{"item_code":self.item_code, "customer_name":self.customer_name,"schedule_month":self.schedule_month,"schedule_year":self.schedule_year, "sales_order_number": self.sales_order_number},["name", "item_code", "schedule_month"], 
 	as_dict=True )
 		if doc:
 	  

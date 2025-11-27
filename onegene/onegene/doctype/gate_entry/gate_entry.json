@@ -27,7 +27,10 @@
   "section_break_oksb",
   "items",
   "gate_entry_items",
-  "no_of_box"
+  "section_break_4i0h",
+  "no_of_box",
+  "column_break_ite6",
+  "no_of_pallet"
  ],
  "fields": [
   {
@@ -177,12 +180,27 @@
    "label": "Entry Time",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "section_break_4i0h",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_ite6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "no_of_pallet",
+   "fieldtype": "Float",
+   "label": "No of Pallet",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-22 18:00:44.067259",
+ "modified": "2025-11-26 16:49:40.050526",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Gate Entry",
