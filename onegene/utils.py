@@ -578,6 +578,7 @@ def get_item_tax_and_sales_template_for_tad(hsn_code, supplier, company):
 def get_gate_items_geu(entry_document, entry_id):
     entry_doc = frappe.get_doc(entry_document, entry_id)
     items = []
+    scrap_items =[]
     si_no = 0
     ref_no=''
     security_name=''
@@ -618,15 +619,11 @@ def get_gate_items_geu(entry_document, entry_id):
                 
             })
         for s in entry_doc.end_bit_scrap:
-            items.append({
-                "item_code": s.item_name,
+            scrap_items.append({
                 "item_name": s.item_name,
                 "qty": s.qty,
                 "uom": s.uom,
-                'box':0,
-                "pallet":0,
-
-                
+                'actual_qty':s.actual_qty,
             })
     else:
         for e in entry_doc.items:
@@ -665,7 +662,8 @@ def get_gate_items_geu(entry_document, entry_id):
         "ref_no":ref_no,
         "security_name":security_name,
         "vehicle_number":vehicle_number,
-        "driver_name":driver_name
+        "driver_name":driver_name,
+        "scrap_items":scrap_items
         
     }
 

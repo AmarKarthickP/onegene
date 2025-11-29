@@ -14236,7 +14236,7 @@ def get_travel_request_html(doc):
     <span style="display:inline-block; width:100px;">Dept.From </span>:&nbsp;{{ doc.department_from or '' }}<br><br>
     <span style="display:inline-block; width:100px;">Dept.To </span>:&nbsp;{{ doc.department_to or '' }}<br><br>
 
-    <span style="display:inline-block; width:100px;padding-bottom:20px;">Requested By</span>: &nbsp;{{doc.employee_name or '' }}<br><br>
+    <span style="display:inline-block; width:100px;padding-bottom:20px;">Requested By</span>: &nbsp;{{emp_name or '' }}<br><br>
    
 </p>
 
@@ -14245,7 +14245,7 @@ def get_travel_request_html(doc):
            <p style="line-height:1.1">
             <span style="display:inline-block; width:90px;">Date & Time</span>: {{ frappe.utils.format_datetime(doc.date_time, "dd-MM-yyyy HH:mm:ss") or '' }}<br><br>
     <span style="display:inline-block; width:90px;">Doc.No</span>: {{ doc.name }}<br><br>
-        <span style="display:inline-block; width:90px;white-space:nowrap;padding-bottom:20px;">Instructed By&nbsp</span>: &nbsp;{{ doc.instructed_by or '' }}<br><br>
+        <span style="display:inline-block; width:90px;white-space:nowrap;padding-bottom:20px;">Instructed By&nbsp</span>: &nbsp;{{ doc.employee_name or '' }}<br><br>
 
        </p></td>
    </tr>

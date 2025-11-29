@@ -257,7 +257,7 @@ def revise_schedule(docname):
                                         exchange_rate = frappe.db.get_value("Sales Order", purchase_order, "conversion_rate")
                                         
                                         
-                                        po_type = frappe.db.get_value("Purchase Order",{"name":purchase_order},"custom_is_jobcard__subcontracted")
+                                        po_type = frappe.db.get_value("Purchase Order",{"name":purchase_order},"custom_po_type")
                                         pos = frappe.get_doc({
                                             "doctype": "Purchase Order Schedule",
                                             "supplier_code": iom_row.supplier_code,
@@ -282,7 +282,7 @@ def revise_schedule(docname):
                                             "pending_amount_inr": qty * order_rate_inr,
                                             "order_rate_inr": order_rate_inr,
                                             "exchange_rate": exchange_rate,
-                                            "po_type": "Job Order" if po_type else "Purchase Order"
+                                            "po_type": po_type
                                         })
 
                                         pos.db_insert()

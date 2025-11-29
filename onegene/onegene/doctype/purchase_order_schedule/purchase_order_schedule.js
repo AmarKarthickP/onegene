@@ -70,13 +70,10 @@ frappe.ui.form.on("Purchase Order Schedule", {
 
         if(frm.doc.purchase_order_number){
 
-            frappe.db.get_value('Purchase Order', frm.doc.purchase_order_number, 'custom_is_jobcard__subcontracted', (r) => {
+            frappe.db.get_value('Purchase Order', frm.doc.purchase_order_number, 'custom_po_type', (r) => {
 
-                if(r && r.custom_is_jobcard__subcontracted){
-                    frm.set_value('po_type',"Job Order")
-                }
-                else{
-                    frm.set_value('po_type',"Purchase Order")
+                if(r && r.custom_po_type){
+                    frm.set_value('po_type',r.custom_po_type)
                 }
             })
 

@@ -28,7 +28,9 @@
   "section_break_noe4",
   "no_of_box",
   "column_break_il1r",
-  "no_of_pallet"
+  "no_of_pallet",
+  "section_break_kfyv",
+  "end_bit_scrap"
  ],
  "fields": [
   {
@@ -164,13 +166,24 @@
    "fieldtype": "Float",
    "label": "No of Pallet",
    "reqd": 1
+  },
+  {
+   "fieldname": "section_break_kfyv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.entry_document==\"Advance Shipping Note\"",
+   "fieldname": "end_bit_scrap",
+   "fieldtype": "Table",
+   "label": "End Bit Scrap & Return",
+   "options": "Supplier-DN Scrap"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-11-26 16:48:50.966988",
+ "modified": "2025-11-29 12:49:26.427743",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Gate Entry Update",

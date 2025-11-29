@@ -298,7 +298,7 @@ function fetch_items(frm) {
                     frm.set_value("vehicle_number", r.message.vehicle_number || "");
                     frm.set_value("driver_name", r.message.driver_name || "");
                     frm.clear_table("gate_entry_item");
-
+                    frm.clear_table("end_bit_scrap");
                     if (r.message.items && r.message.items.length > 0) {
                         r.message.items.forEach(function (item) {
                             let row = frm.add_child("gate_entry_item");
@@ -310,8 +310,18 @@ function fetch_items(frm) {
                             row.pallet = item.pallet;
                         });
                     }
+                    if (r.message.scrap_items && r.message.scrap_items.length > 0) {
+                        r.message.scrap_items.forEach(function (item) {
+                            let row = frm.add_child("end_bit_scrap");
+                            row.qty = item.qty;
+                            row.item_name = item.item_name;
+                            row.uom = item.uom;
+                            row.actual_qty = item.actual_qty;
+                        });
+                    }
 
                     frm.refresh_field("gate_entry_item");
+                    frm.refresh_field("end_bit_scrap");
                 } else {
                     frm.clear_table("gate_entry_item");
                     frm.refresh_field("gate_entry_item");

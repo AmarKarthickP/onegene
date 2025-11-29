@@ -7,8 +7,11 @@ frappe.ui.form.on("Inter Office Memo", {
     supplier_accept_debit_value(frm){
     frm.set_value("supplier_not_accept_debit_value",frm.doc.tot_short_value-frm.doc.supplier_accept_debit_value)
     }
-,    new_supplier_group(frm){
+,  
+
+  new_supplier_group(frm){
         if((frm.doc.iom_type=="Approval for New Supplier Registration")){
+            frm.clear_table("attachments")
             if(frm.doc.new_supplier_group=="Import- Bought-Out" || frm.doc.new_supplier_group=="Import- Raw Material"){
                 const rows = [
                     "CEPA Certificate of Origin",
@@ -1504,16 +1507,9 @@ if (finance_types.includes(frm.doc.iom_type)) {
                 }
 
             }, 250); 
-      
 
 
-
-       
-
-       
-
-
-
+            toggle_funded_amount(frm);
        
         if (frm.get_field("customer_gstin"))
             india_compliance.set_gstin_status(frm.get_field("customer_gstin"));
@@ -4783,7 +4779,7 @@ frappe.ui.form.on("Approval for Price Revision PO Material", {
 //     });
 // }
 
-frappe.ui.form.on('Approval for Proto Sample PO', { // Child table doctype
+frappe.ui.form.on('Approval for Proto Sample PO', { 
     po_price_new(frm, cdt, cdn) {
         var child = locals[cdt][cdn];
         calculate_total_po_price(frm);
@@ -5127,70 +5123,22 @@ frappe.ui.form.on('Approval for Proto Sample PO', { // Child table doctype
 });
 
 function calculate_proto_tax_and_total(frm) {
-    // if (frm.doc.iom_type === "Approval for Proto Sample PO" 
-    //     && frm.doc.proto_sample_po 
-    //     && frm.doc.department_from === "Marketing - WAIP") {
-
-    //     // Step 1: Calculate CN totals
-    //     let total = 0;
-    //     let total_inr = 0;
-    //     (frm.doc.proto_sample_po || []).forEach(row => {
-    //         if (row.value) {
-    //                     if (row.value) total += row.value;
-    //     if(row.value_inr)total_inr+=row.value_inr;
-
-    //         }
-    //     });
-
-    //     frappe.model.set_value(frm.doc.doctype, frm.doc.name, "total_po_value", total);
-    //     frappe.model.set_value(frm.doc.doctype, frm.doc.name, "total_po_value_inr", total_inr);
-
-    //     // Step 2: If no taxes exist, auto-fetch and apply them
-    //     if (!frm.doc.taxes || frm.doc.taxes.length === 0) {
-    //         frappe.call({
-    //             method: "onegene.onegene.doctype.inter_office_memo.inter_office_memo.apply_domestic_taxes",
-    //             args: { doc: frm.doc },
-    //             callback: function(r) {
-    //                 if (r.message) {
-    //                     frm.clear_table("taxes");
-    //                     (r.message.taxes || []).forEach(tax => {
-    //                         let row = frm.add_child("taxes");
-    //                         row.charge_type = tax.charge_type;
-    //                         row.account_head = tax.account_head;
-    //                         row.description = tax.description;
-    //                         row.rate = tax.rate;
-    //                         row.tax_amount = tax.tax_amount;
-    //                     });
-    //                     frm.refresh_field("taxes");
-    //                     calculate_proto_tax_and_total(frm); // ✅ re-run calculation after adding taxes
-    //                 }
-    //             }
-    //         });
-    //         return; // wait for callback to recalc
-    //     }
-
-    //     // Step 3: Calculate taxes
-    //     let total_tax = 0;
-    //     let previous_row_total = total || 0;
-
-    //     (frm.doc.taxes || []).forEach(row => {
-    //         let tax_amount = (total || 0) * (row.rate || 0) / 100;
-    //         frappe.model.set_value(row.doctype, row.name, "tax_amount", tax_amount);
-    //         frappe.model.set_value(row.doctype, row.name, "total", previous_row_total + tax_amount);
-    //         total_tax += tax_amount;
-    //         previous_row_total += tax_amount;
-    //     });
-
-    //     frm.refresh_field("taxes");
-    // }
+    
     if (frm.doc.iom_type === "Approval for Proto Sample SO" &&
-        frm.doc.proto_sample_po &&
+        (frm.doc.proto_sample_po || frm.doc.approval_for_proto_sample_so) &&
         frm.doc.department_from === "Marketing - WAIP") {
 
         // Step 1: Calculate CN totals
         let total = 0;
         let total_inr = 0;
         (frm.doc.proto_sample_po || []).forEach(row => {
+            if (row.value) {
+                if (row.value) total += row.value;
+                if (row.value_inr) total_inr += row.value_inr;
+
+            }
+        });
+         (frm.doc.approval_for_proto_sample_so || []).forEach(row => {
             if (row.value) {
                 if (row.value) total += row.value;
                 if (row.value_inr) total_inr += row.value_inr;
@@ -5247,6 +5195,10 @@ function calculate_total_po_price(frm) {
     let total = 0;
     let total_inr = 0;
     (frm.doc.proto_sample_po || []).forEach(row => {
+        if (row.value) total += row.value;
+        if (row.value_inr) total_inr += row.value_inr;
+    });
+    (frm.doc.approval_for_proto_sample_so || []).forEach(row => {
         if (row.value) total += row.value;
         if (row.value_inr) total_inr += row.value_inr;
     });
@@ -8523,9 +8475,7 @@ async function update_gstin_no_status(frm) {
 
 frappe.ui.form.on('Travel Costing Details', {
 
-    refresh(frm) {
-        toggle_funded_amount_fields(frm);
-    },
+   
     sponsored_amount(frm, cdt, cdn) {
         calculate_totals(frm);
     },
@@ -8553,15 +8503,26 @@ function calculate_totals(frm) {
     frm.refresh_field("total_funded_amount_new");
 }
 
-function toggle_finance_fields(frm) {
-    frm.fields_dict['travel_costing_details'].grid.grid_rows.forEach(row => {
-        if (frm.doc.workflow_state === "Pending for Finance") {
-            row.grid.set_df_property('finance_amount', 'read_only', 0); 
-        } else {
-            row.grid.set_df_property('finance_amount', 'read_only', 1); 
-        }
-        row.grid.refresh();
-    });
+
+
+
+
+function toggle_funded_amount(frm) {
+
+    let is_read_only = frm.doc.workflow_state !== "Pending for Finance";
+    let is_mandatory = frm.doc.workflow_state === "Pending for Finance";  
+    
+    frm.fields_dict["travel_costing_details"].grid.update_docfield_property(
+        "funded_amount", "read_only", is_read_only
+    );
+
+    
+    frm.fields_dict["travel_costing_details"].grid.update_docfield_property(
+        "funded_amount", "reqd", is_mandatory
+    );
+
+    
+    frm.refresh_field("travel_costing_details");
 }
 
 frappe.ui.form.on('Supplier Stock Reconciliation', { 
@@ -8645,3 +8606,319 @@ function cal_shortage_val(frm){
     frm.refresh_field("total_excess_value");
     frm.set_value("supplier_not_accept_debit_value",tot_shortage-frm.doc.supplier_accept_debit_value)
 }
+frappe.ui.form.on('Proto Sample SO IOM', { 
+    
+    
+    po_price_new(frm, cdt, cdn) {
+        var child = locals[cdt][cdn];
+        calculate_total_po_price(frm);
+        calculate_proto_tax_and_total(frm)
+
+        if (frm.doc.currency !== "INR") {
+            frappe.call({
+                method: "frappe.client.get_list",
+                args: {
+                    doctype: "Currency Exchange",
+                    filters: {
+                        from_currency: frm.doc.currency,
+                        to_currency: "INR"
+                    },
+                    fields: ["exchange_rate", "date"],
+                    order_by: "date desc",
+                    limit_page_length: 1
+                },
+                callback: function(r) {
+                    if (r.message && r.message.length > 0) {
+                        const rate = r.message[0].exchange_rate;
+                        frappe.model.set_value(cdt, cdn, 'po_price_inrexisting', child.po_price_new * rate);
+                    } else {
+                        frappe.msgprint("No currency exchange rate found for " + frm.doc.currency + " to INR.");
+                        frappe.model.set_value(cdt, cdn, 'po_price_inrexisting', 0);
+
+                    }
+                    calculate_total_po_price(frm);
+                    calculate_proto_tax_and_total(frm)
+
+                }
+            });
+        }
+        if (frm.doc.currency == "INR") {
+            var child = locals[cdt][cdn];
+            frappe.model.set_value(cdt, cdn, 'po_price_inrexisting', child.po_price_new);
+            calculate_total_po_price(frm);
+            calculate_proto_tax_and_total(frm)
+
+        }
+        frappe.model.set_value(cdt, cdn, "value", child.qty_new * child.po_price_new)
+        if (frm.doc.currency !== "INR" && frm.doc.exchange_rate == 0) {
+            frappe.call({
+                method: "frappe.client.get_list",
+                args: {
+                    doctype: "Currency Exchange",
+                    filters: {
+                        from_currency: frm.doc.currency,
+                        to_currency: "INR"
+                    },
+                    fields: ["exchange_rate", "date"],
+                    order_by: "date desc",
+                    limit_page_length: 1
+                },
+                callback: function(r) {
+                    if (r.message && r.message.length > 0) {
+                        const rate = r.message[0].exchange_rate;
+                        frappe.model.set_value(cdt, cdn, 'value_inr', child.value * rate);
+                    }
+                    calculate_total_po_price(frm)
+                    calculate_proto_tax_and_total(frm);
+
+                }
+            });
+        } else if (frm.doc.exchange_rate) {
+            frappe.model.set_value(cdt, cdn, 'value_inr', child.value * frm.doc.exchange_rate);
+            calculate_total_po_price(frm)
+            calculate_proto_tax_and_total(frm);
+
+        }
+        if (frm.doc.currency == "INR") {
+            var child = locals[cdt][cdn];
+            frappe.model.set_value(cdt, cdn, 'value_inr', child.value);
+            calculate_total_po_price(frm)
+            calculate_proto_tax_and_total(frm);
+
+        }
+    },
+    part_no: function(frm, cdt, cdn) {
+        console.log("hi")
+        let row = locals[cdt][cdn];
+        let duplicate_found = false;
+
+        if (row.part_no) {
+            frappe.call({
+                method: "onegene.onegene.doctype.inter_office_memo.inter_office_memo.get_item_tax_template_from_hsn",
+                args: {
+                    item_code: row.part_no
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        frappe.model.set_value(cdt, cdn, "item_tax_template", r.message);
+                    } else {
+                        frappe.model.set_value(cdt, cdn, "item_tax_template", "");
+                    }
+                }
+            });
+        } else {
+            frappe.model.set_value(cdt, cdn, "item_tax_template", "");
+        }
+        frm.doc.approval_for_proto_sample_so.forEach(other_row => {
+            if (other_row.part_no === row.part_no && other_row.name !== row.name) {
+                duplicate_found = true;
+            }
+        });
+
+        if (duplicate_found) {
+            let d = frappe.msgprint({
+                title: __("Removing Duplicate Entry"),
+                message: __("Item Code <b>{0}</b> is already added.", [row.part_no]),
+                indicator: 'red'
+            });
+            frm.get_field('approval_for_proto_sample_so').grid.grid_rows_by_docname[cdn].remove();
+            frm.refresh_field('approval_for_proto_sample_so');
+            setTimeout(() => {
+                if (d?.hide) d.hide();
+            }, 1500);
+            return;
+        }
+
+
+        if (row.part_no) {
+            frappe.db.get_value('Item', row.part_no, 'gst_hsn_code')
+                .then(r => {
+                    const hsn_code = r.message.gst_hsn_code;
+                    row.hsn_code = hsn_code;
+                    frm.refresh_field('approval_for_proto_sample_so');
+
+                    // Find index of current row
+                    let current_index = frm.doc.approval_for_proto_sample_so.findIndex(row => row.name === row.name);
+
+                    // get taxes based on template
+                    if (current_index == 0) {
+                        if (row.hsn_code && frm.doc.customer && frm.doc.company) {
+                            frappe.call({
+                                method: "onegene.utils.get_item_tax_and_sales_template",
+                                args: {
+                                    hsn_code: row.hsn_code,
+                                    customer: frm.doc.customer,
+                                    company: frm.doc.company
+                                },
+                                freeze: true,
+                                freeze_message: __("Fetching Tax..."),
+                                callback: function(r) {
+                                    if (r.message) {
+                                        frappe.model.set_value(cdt, cdn, "item_tax_template", r.message.item_tax_template);
+                                        frm.set_value("taxes_and_charges", r.message.sales_taxes_and_charges_template)
+                                            .then(() => {
+                                                // ✅ Trigger tax calculation only after taxes table is set
+                                                calculate_proto_tax_and_total(frm);
+                                            });
+
+                                    }
+                                }
+                            });
+                        }
+
+                    }
+                    if (current_index > 0) {
+                        let previous_row = frm.doc.approval_for_proto_sample_so[current_index - 1];
+
+                        if (previous_row.hsn_code && previous_row.hsn_code !== hsn_code) {
+                            let msg = frappe.msgprint({
+                                title: __("Removing Current Row"),
+                                message: __("HSN Code mismatch: <b>{0}</b> (Previous) vs <b>{1}</b> (Current)",
+                                    [previous_row.hsn_code, hsn_code]),
+                                indicator: 'orange'
+                            });
+
+                            frm.get_field('approval_for_proto_sample_so').grid.grid_rows_by_docname[cdn].remove();
+                            frm.refresh_field('approval_for_proto_sample_so');
+                            setTimeout(() => {
+                                if (msg && msg.hide) msg.hide();
+                            }, 1500);
+                        }
+
+                    }
+
+
+                })
+        }
+
+    },
+    
+    po_price(frm, cdt, cdn) {
+        let d = locals[cdt][cdn];
+        calculate_total_po_price(frm);
+        calculate_proto_tax_and_total(frm)
+
+    },
+    approval_for_proto_sample_so_remove: function(frm) {
+        calculate_total_po_price(frm);
+
+        calculate_proto_tax_and_total(frm); // always recalc totals on manual row delete
+    },
+    hsn_code: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        let duplicate_found = false;
+
+        frm.doc.approval_for_proto_sample_so.forEach(other_row => {
+            if (other_row.item_code_new === row.item_code_new && other_row.name !== row.name) {
+                duplicate_found = true;
+            }
+        });
+
+        if (duplicate_found) {
+            let d = frappe.msgprint({
+                title: __("Removing Duplicate Entry"),
+                message: __("Item Code <b>{0}</b> is already added.", [row.item_code_new]),
+                indicator: 'red'
+            });
+            frm.get_field('approval_for_proto_sample_so').grid.grid_rows_by_docname[cdn].remove();
+            frm.refresh_field('approval_for_proto_sample_so');
+            setTimeout(() => {
+                if (d?.hide) d.hide();
+            }, 1500);
+            return;
+        }
+
+
+        if (row.item_code_new) {
+            let current_index = frm.doc.approval_for_proto_sample_so.findIndex(row => row.name === row.name);
+
+            // get taxes based on template
+            if (current_index == 0) {
+                if (row.hsn_code && frm.doc.customer && frm.doc.company) {
+                    frappe.call({
+                        method: "onegene.utils.get_item_tax_and_sales_template",
+                        args: {
+                            hsn_code: row.hsn_code,
+                            customer: frm.doc.customer,
+                            company: frm.doc.company
+                        },
+                        freeze: true,
+                        freeze_message: __("Fetching Tax..."),
+                        callback: function(r) {
+                            if (r.message) {
+                                frappe.model.set_value(cdt, cdn, "item_tax_template", r.message.item_tax_template);
+                                frm.set_value("taxes_and_charges", r.message.sales_taxes_and_charges_template)
+                                    .then(() => {
+                                        calculate_proto_tax_and_total(frm);
+                                    });
+
+                            }
+                        }
+                    });
+                }
+
+            }
+            if (current_index > 0) {
+                let previous_row = frm.doc.approval_for_proto_sample_so[current_index - 1];
+
+                if (previous_row.hsn_code && previous_row.hsn_code !== hsn_code) {
+                    let msg = frappe.msgprint({
+                        title: __("Removing Current Row"),
+                        message: __("HSN Code mismatch: <b>{0}</b> (Previous) vs <b>{1}</b> (Current)",
+                            [previous_row.hsn_code, hsn_code]),
+                        indicator: 'orange'
+                    });
+
+                    frm.get_field('approval_for_proto_sample_so').grid.grid_rows_by_docname[cdn].remove();
+                    frm.refresh_field('approval_for_proto_sample_so');
+                    setTimeout(() => {
+                        if (msg && msg.hide) msg.hide();
+                    }, 1500);
+                }
+
+            }
+
+        }
+    },
+    qty_new: function(frm, cdt, cdn) {
+        let d = locals[cdt][cdn];
+        frappe.model.set_value(cdt, cdn, "value", d.qty_new * d.po_price_new)
+        console.log("inside")
+        if (frm.doc.currency !== "INR" && frm.doc.exchange_rate == 0) {
+            frappe.call({
+                method: "frappe.client.get_list",
+                args: {
+                    doctype: "Currency Exchange",
+                    filters: {
+                        from_currency: frm.doc.currency,
+                        to_currency: "INR"
+                    },
+                    fields: ["exchange_rate", "date"],
+                    order_by: "date desc",
+                    limit_page_length: 1
+                },
+                callback: function(r) {
+                    if (r.message && r.message.length > 0) {
+                        const rate = r.message[0].exchange_rate;
+                        frappe.model.set_value(cdt, cdn, 'value_inr', d.value * rate);
+                    }
+                    calculate_total_po_price(frm)
+                    calculate_proto_tax_and_total(frm);
+
+                }
+            });
+        } else if (frm.doc.exchange_rate) {
+            frappe.model.set_value(cdt, cdn, 'value_inr', d.value * frm.doc.exchange_rate);
+            calculate_total_po_price(frm)
+            calculate_proto_tax_and_total(frm);
+
+        }
+        if (frm.doc.currency == "INR") {
+            var child = locals[cdt][cdn];
+            frappe.model.set_value(cdt, cdn, 'value_inr', child.value);
+            calculate_total_po_price(frm)
+            calculate_proto_tax_and_total(frm);
+
+        }
+    }
+});

@@ -50,7 +50,6 @@
   "created_by",
   "column_break_nsxl",
   "remarks",
-  "amended_from",
   "disable_update_items",
   "section_break_ibif",
   "column_break_bway",
@@ -61,7 +60,8 @@
   "column_break_rmly",
   "child_name",
   "summary_tab",
-  "schedule_summary"
+  "schedule_summary",
+  "amended_from"
  ],
  "fields": [
   {
@@ -423,14 +423,14 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Order Type",
-   "options": "Purchase Order\nJob Order",
+   "options": "Purchase Order\nJob Order\nService Order",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-15 13:07:08.126210",
+ "modified": "2025-11-28 18:51:36.222882",
  "modified_by": "Administrator",
  "module": "ONEGENE",
  "name": "Purchase Order Schedule",

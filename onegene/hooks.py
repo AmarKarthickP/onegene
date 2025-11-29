@@ -236,6 +236,12 @@ fixtures = [
         "filters": [
             ["module", "=", "ONEGENE"]
         ]
+    },
+    {
+        "dt": "Print Format",
+        "filters": [
+            ["module", "=", "ONEGENE"]
+        ]
     }
 ]
 
@@ -387,9 +393,9 @@ doc_events = {
 	},
 	'Sales Invoice': {
 		"validate": ["onegene.onegene.custom.calculate_total_cbm","onegene.onegene.custom.validate_sales_invoice","onegene.onegene.custom.validate_item_rate","onegene.onegene.custom.update_the_changes_to_lr","onegene.onegene.custom.check_approved_lr",
-		"onegene.onegene.custom.update_datetime_and_approver_details_in_Si", "onegene.onegene.custom.update_hod_time",
+		"onegene.onegene.custom.update_datetime_and_approver_details_in_Si", "onegene.onegene.custom.update_hod_time","onegene.onegene.custom.get_calculated_height",
         "onegene.onegene.custom.make_url_for_si","onegene.onegene.custom.update_port_in_si","onegene.onegene.custom.trigger_notification_based_on_the_workflow_in_si", "onegene.onegene.event.sales_invoice.set_posting_date_as_creation"],
-		"before_insert": ["onegene.onegene.custom.sales_invoice_custom_autoname","onegene.utils.update_si_name","onegene.onegene.custom.get_calculated_height"],
+		"before_insert": ["onegene.onegene.custom.sales_invoice_custom_autoname","onegene.utils.update_si_name"],
 		"on_submit":["onegene.utils.update_lr_status", "onegene.onegene.custom.mark_qid_for_si"],
 		'after_insert':[
 			# 'onegene.utils.create_gate_entry',
